@@ -18,8 +18,8 @@ services:
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
       interval: 5s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
 
   lumio-db:
     image: postgres:16-alpine
@@ -35,8 +35,21 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U lumio -d lumio" ]
       interval: 5s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
+
+  lumio-web:
+    build: web
+    container_name: lumio-web
+    restart: unless-stopped
+    volumes:
+      - "./web:/app"
+      - "/app/node_modules"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
 
 volumes:
   lumio-db-data:
