@@ -1,0 +1,94 @@
+[tools]
+go = "1.26"
+golangci-lint = "2.12.2"
+"go:github.com/ogen-go/ogen/cmd/ogen" = "1.24.0"
+
+[env]
+GOOS = "linux"
+GOARCH = "amd64"
+CGO_ENABLED = "0"
+
+[tasks.default]
+run = [
+    { task = "build" },
+    { task = "check" },
+]
+
+# Local environment
+
+[tasks.dev]
+depends = [ "backend:build" ]
+run = "docker compose up -d --wait"
+
+[tasks."dev:reload"]
+depends = [ "backend:build" ]
+run = "docker compose restart lumio"
+
+[tasks."dev:down"]
+run = "docker compose down"
+
+[tasks."dev:ps"]
+run = "docker compose ps"
+
+[tasks."dev:logs"]
+run = "docker compose logs -f"
+
+# Builds
+
+[tasks.build]
+run = [
+    { task = "backend:build" },
+]
+
+[tasks."backend:tidy"]
+dir = "backend"
+run = "go mod tidy"
+
+[tasks."backend:modules"]
+dir = "backend"
+run = "go mod download"
+
+[tasks."backend:generate"]
+run = """ogen --clean \
+--target ./backend/api/server/publicapi \
+--package publicapi \
+--config ./backend/api/server/publicapi/.ogen.yml \
+./api/publicapi.yml"""
+
+[tasks."backend:build"]
+dir = "backend"
+depends = [ "backend:generate", "backend:modules" ]
+run = """go build \
+-trimpath -v \
+-o ./bin/lumio ./cmd/lumio
+"""
+
+# Checks
+
+[tasks.check]
+run = [
+    { task = "test" },
+    { task = "lint" },
+]
+
+# Tests
+
+[tasks.test]
+run = [
+    { task = "backend:test" },
+]
+
+[tasks."backend:test"]
+dir = "backend"
+run = "go test ./..."
+
+# Linting
+
+[tasks.lint]
+run = [
+    { task = "backend:lint" },
+]
+
+[tasks."backend:lint"]
+dir = "backend"
+run = [ "golangci-lint run" ]
