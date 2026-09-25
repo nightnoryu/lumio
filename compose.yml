@@ -1,0 +1,42 @@
+services:
+  lumio:
+    container_name: lumio
+    build: backend
+    environment:
+      LUMIO_DB_HOST: lumio-db
+      LUMIO_DB_PORT: 5432
+      LUMIO_DB_NAME: lumio
+      LUMIO_DB_USER: lumio
+      LUMIO_DB_PASSWORD: j4P6X1
+      LUMIO_DB_MAX_CONN: 10
+      LUMIO_DB_CONN_LIFETIME: 60
+    volumes:
+      - "./backend/bin/lumio:/app/bin/lumio:ro"
+    depends_on:
+      lumio-db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  lumio-db:
+    image: postgres:16-alpine
+    container_name: lumio-db
+    environment:
+      POSTGRES_USER: lumio
+      POSTGRES_PASSWORD: j4P6X1
+      POSTGRES_DB: lumio
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - "lumio-db-data:/var/lib/postgresql/data"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U lumio -d lumio" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  lumio-db-data:
