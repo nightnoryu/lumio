@@ -2,6 +2,8 @@
 go = "1.26"
 golangci-lint = "2.12.2"
 "go:github.com/ogen-go/ogen/cmd/ogen" = "1.24.0"
+node = "26"
+pnpm = "12"
 
 [env]
 GOOS = "linux"
@@ -63,6 +65,15 @@ run = """go build \
 -o ./bin/lumio ./cmd/lumio
 """
 
+[tasks."web:modules"]
+dir = "web"
+run = "pnpm install --frozen-lockfile"
+
+[tasks."web:build"]
+dir = "web"
+depends = [ "web:modules" ]
+run = "pnpm run build"
+
 # Checks
 
 [tasks.check]
@@ -76,19 +87,29 @@ run = [
 [tasks.test]
 run = [
     { task = "backend:test" },
+    # { task = "web:test" },
 ]
 
 [tasks."backend:test"]
 dir = "backend"
 run = "go test ./..."
 
+[tasks."web:test"]
+dir = "web"
+run = "pnpm run test"
+
 # Linting
 
 [tasks.lint]
 run = [
     { task = "backend:lint" },
+    { task = "web:lint" },
 ]
 
 [tasks."backend:lint"]
 dir = "backend"
 run = [ "golangci-lint run" ]
+
+[tasks."web:lint"]
+dir = "web"
+run = [ "pnpm run lint" ]
