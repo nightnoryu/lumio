@@ -1,9 +1,9 @@
 [tools]
-go = "1.26"
+go = "1.26.8"
 golangci-lint = "2.12.2"
 "go:github.com/ogen-go/ogen/cmd/ogen" = "1.24.0"
-node = "26"
-pnpm = "12"
+node = "26.8.1"
+pnpm = "12.3.1"
 
 [env]
 GOOS = "linux"
@@ -25,6 +25,10 @@ run = "docker compose up -d --wait"
 [tasks."dev:reload"]
 depends = [ "backend:build" ]
 run = "docker compose restart lumio"
+
+[tasks."dev:rebuild"]
+depends = [ "backend:build" ]
+run = "docker compose up -d --wait --build"
 
 [tasks."dev:down"]
 run = "docker compose down"
@@ -64,11 +68,12 @@ outputs = [ "backend/api/server/publicapi/*_gen.go" ]
 
 [tasks."backend:build"]
 dir = "backend"
-depends = [ "backend:generate", "backend:modules" ]
+depends = [ "backend:generate", "backend:modules", "web:build" ]
 run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
     "go.*",
     "**/*.go",
+    "internal/webui/dist/**/*",
 ]
 outputs = [ "bin/lumio" ]
 
@@ -99,6 +104,7 @@ run = [
 
 [tasks."backend:test"]
 dir = "backend"
+depends = [ "backend:generate", "web:build" ]
 run = "go test ./..."
 
 [tasks."web:test"]
@@ -115,8 +121,10 @@ run = [
 
 [tasks."backend:lint"]
 dir = "backend"
-run = [ "golangci-lint run" ]
+depends = [ "backend:generate", "web:build" ]
+run = [ "golangci-lint run", "golangci-lint fmt --diff" ]
 
 [tasks."web:lint"]
 dir = "web"
-run = [ "pnpm run lint" ]
+depends = [ "web:modules" ]
+run = [ "pnpm exec tsc --noEmit", "pnpm run lint" ]

@@ -1,2 +1,7 @@
 /.idea/
 /.vscode/
+/backend/bin/
+/backend/internal/webui/dist/
+/.env
+/compose.override.yml
+/ROADMAP.md

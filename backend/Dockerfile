@@ -1,4 +1,4 @@
-FROM alpine:3.20
+FROM alpine:3.23.3
 
 RUN apk add --no-cache ca-certificates curl && \
     update-ca-certificates && \
@@ -12,4 +12,3 @@ USER lumio-user
 
 EXPOSE 8080
 ENTRYPOINT [ "/app/bin/lumio" ]
-CMD ["service"]

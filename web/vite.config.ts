@@ -3,6 +3,10 @@ import {defineConfig} from "vitest/config";
 
 export default defineConfig({
     plugins: [react()],
+    build: {
+        outDir: "../backend/internal/webui/dist",
+        emptyOutDir: true,
+    },
     server: {
         host: true,
         port: 3000,

@@ -6,6 +6,8 @@ on:
       - 'backend/**'
       - 'web/**'
       - 'mise.toml'
+      - 'api/**'
+      - 'compose.yml'
       - '.github/workflows/ci.yml'
   push:
     branches: [ main ]

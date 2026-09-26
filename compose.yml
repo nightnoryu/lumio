@@ -1,55 +1,100 @@
 services:
+  lumio-ingress:
+    image: traefik:v3.7@sha256:9c2a54d87f76f5c2f5f2682c68394af92fb12c0a2686798d6462a3f84bd78eaf
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--ping=true"
+    ports:
+      - "127.0.0.1:3000:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    depends_on:
+      lumio:
+        condition: service_healthy
+      lumio-web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   lumio:
-    container_name: lumio
     build: backend
     environment:
       LUMIO_DB_HOST: lumio-db
       LUMIO_DB_PORT: 5432
       LUMIO_DB_NAME: lumio
       LUMIO_DB_USER: lumio
-      LUMIO_DB_PASSWORD: j4P6X1
+      LUMIO_DB_PASSWORD: ${LUMIO_DB_PASSWORD:-lumio-local-only}
       LUMIO_DB_MAX_CONN: 10
-      LUMIO_DB_CONN_LIFETIME: 60
+      LUMIO_DB_CONN_LIFETIME: 60s
     volumes:
       - "./backend/bin/lumio:/app/bin/lumio:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lumio-api.rule=Host(`localhost`) && (PathPrefix(`/api`) || Path(`/healthz`) || Path(`/livez`))"
+      - "traefik.http.services.lumio-api.loadbalancer.server.port=8080"
     depends_on:
       lumio-db:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
       interval: 5s
-      timeout: 10s
+      timeout: 5s
       retries: 10
 
   lumio-db:
     image: postgres:16-alpine
-    container_name: lumio-db
     environment:
       POSTGRES_USER: lumio
-      POSTGRES_PASSWORD: j4P6X1
+      POSTGRES_PASSWORD: ${LUMIO_DB_PASSWORD:-lumio-local-only}
       POSTGRES_DB: lumio
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - "lumio-db-data:/var/lib/postgresql/data"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U lumio -d lumio" ]
+      test: ["CMD-SHELL", "pg_isready -U lumio -d lumio"]
       interval: 5s
-      timeout: 10s
+      timeout: 5s
+      retries: 10
+
+  lumio-storage:
+    image: alpine/minio:RELEASE.2025-10-15T17-29-55Z
+    user: "0:0"
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${LUMIO_MINIO_USER:-lumio-local}
+      MINIO_ROOT_PASSWORD: ${LUMIO_MINIO_PASSWORD:-lumio-local-only}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - "lumio-storage-data:/data"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
       retries: 10
 
   lumio-web:
     build: web
-    container_name: lumio-web
-    restart: unless-stopped
     volumes:
       - "./web:/app"
       - "/app/node_modules"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lumio-web.rule=Host(`localhost`)"
+      - "traefik.http.services.lumio-web.loadbalancer.server.port=3000"
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
       interval: 5s
-      timeout: 10s
+      timeout: 5s
       retries: 10
 
 volumes:
   lumio-db-data:
+  lumio-storage-data:
