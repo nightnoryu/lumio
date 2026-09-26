@@ -17,3 +17,22 @@ h1 { font-family: Georgia, serif; font-weight: 400; font-size: clamp(42px, 7vw, 
 .intro { max-width: 490px; font-size: 18px; line-height: 1.7; color: #5c6056; }
 .note { border-top: 1px solid #d6d9cb; margin-top: 42px; padding-top: 20px; font-size: 14px; color: #5c6056; }
 footer { font-size: 12px; color: #5c6056; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+form { display: grid; gap: 12px; max-width: 450px; }
+label { font-size: 14px; margin-top: 8px; }
+input { width: 100%; min-width: 0; padding: 13px; border: 1px solid #a5ab9b; border-radius: 5px; background: #fffcf6; font: inherit; color: inherit; }
+button { border: 0; border-radius: 5px; padding: 14px 20px; background: #343f30; color: #fff; font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; }
+:focus-visible { outline: 3px solid #71895e; outline-offset: 3px; }
+.quiet { background: transparent; color: #343f30; padding: 10px 0; text-decoration: underline; }
+.switch { margin-top: 18px; text-align: left; }
+.hint { font-size: 13px; color: #5c6056; line-height: 1.5; margin: 0 0 10px; max-width: 450px; }
+.error { border-left: 3px solid #9b3329; padding: 12px; color: #852b23; background: #f7e5df; }
+.subdomain { display: flex; align-items: center; gap: 8px; }
+.subdomain span { overflow-wrap: anywhere; }
+.sites { padding: 0; list-style: none; }
+.sites li { border: 1px solid #d6d9cb; border-radius: 8px; padding: 24px; }
+h2 { font-family: Georgia, serif; font-weight: 400; overflow-wrap: anywhere; }
+.badge { font-size: 12px; padding: 5px 10px; background: #e3e6d9; border-radius: 20px; }
+@media (max-width: 600px) { main { padding: 28px 6vw; } section { padding: 50px 0; } }

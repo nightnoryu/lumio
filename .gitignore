@@ -2,6 +2,7 @@
 /.vscode/
 /backend/bin/
 /backend/internal/webui/dist/
+/web/src/api/schema.d.ts
 /.env
 /compose.override.yml
 /ROADMAP.md
