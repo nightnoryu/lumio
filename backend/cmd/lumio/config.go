@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"net"
+	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -11,7 +13,11 @@ import (
 	"github.com/nightnoryu/go-kita/postgresql"
 )
 
+const localhost = "localhost"
+
 type config struct {
+	DashboardOrigin  string        `env:"DASHBOARD_ORIGIN" envDefault:"http://localhost:3000"`
+	BaseDomain       string        `env:"BASE_DOMAIN" envDefault:"localhost"`
 	ServeRESTAddress string        `env:"SERVE_REST_ADDRESS" envDefault:":8080"`
 	LogLevel         jsonlog.Level `env:"LOG_LEVEL" envDefault:"info"`
 	DBHost           string        `env:"DB_HOST,required"`
@@ -24,6 +30,23 @@ type config struct {
 }
 
 func (c *config) validate() error {
+	origin, originErr := url.Parse(c.DashboardOrigin)
+	if originErr != nil || origin.Host == "" || origin.User != nil || origin.Path != "" || origin.RawQuery != "" || origin.Fragment != "" || origin.ForceQuery ||
+		(origin.Scheme != "https" && (origin.Scheme != "http" || origin.Hostname() != localhost)) {
+		return errors.New("LUMIO_DASHBOARD_ORIGIN must be an HTTPS origin (HTTP is allowed only for localhost)")
+	}
+	if len(c.BaseDomain) > 189 || !regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*$`).MatchString(c.BaseDomain) {
+		return errors.New("LUMIO_BASE_DOMAIN must be a lowercase DNS name")
+	}
+	for _, label := range strings.Split(c.BaseDomain, ".") {
+		if len(label) > 63 {
+			return errors.New("LUMIO_BASE_DOMAIN labels must not exceed 63 characters")
+		}
+	}
+	if origin.Hostname() != localhost && origin.Hostname() != "app."+c.BaseDomain {
+		return errors.New("LUMIO_DASHBOARD_ORIGIN must use app.LUMIO_BASE_DOMAIN")
+	}
+
 	_, port, err := net.SplitHostPort(c.ServeRESTAddress)
 	if err != nil {
 		return errors.New("LUMIO_SERVE_REST_ADDRESS must be a host:port address")

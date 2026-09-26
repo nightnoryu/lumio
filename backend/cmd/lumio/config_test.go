@@ -13,7 +13,8 @@ func TestConfigFromEnvironment(t *testing.T) {
 		"LUMIO_DB_HOST":            "localhost", "LUMIO_DB_PORT": "5432",
 		"LUMIO_DB_NAME": "lumio", "LUMIO_DB_USER": "lumio", "LUMIO_DB_PASSWORD": "test",
 		"LUMIO_DB_MAX_CONN": "10", "LUMIO_DB_CONN_LIFETIME": "60s",
-		"LUMIO_LOG_LEVEL": "info",
+		"LUMIO_LOG_LEVEL":        "info",
+		"LUMIO_DASHBOARD_ORIGIN": "http://localhost:3000", "LUMIO_BASE_DOMAIN": "localhost",
 	} {
 		t.Setenv(key, value)
 	}
@@ -28,6 +29,10 @@ func TestConfigFromEnvironment(t *testing.T) {
 		name   string
 		change func(*config)
 	}{
+		{"insecure remote origin", func(c *config) { c.DashboardOrigin = "http://app.example.com" }},
+		{"origin with path", func(c *config) { c.DashboardOrigin = "https://app.example.com/" }},
+		{"unrelated dashboard", func(c *config) { c.DashboardOrigin = "https://evil.example.com"; c.BaseDomain = "example.com" }},
+		{"invalid base domain", func(c *config) { c.BaseDomain = "*.example.com" }},
 		{"invalid address", func(c *config) { c.ServeRESTAddress = "localhost" }},
 		{"invalid HTTP port", func(c *config) { c.ServeRESTAddress = ":70000" }},
 		{"empty database", func(c *config) { c.DBName = " " }},

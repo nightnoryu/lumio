@@ -1,7 +1,14 @@
 openapi: 3.0.3
 info:
   title: Lumio public API
-  version: 0.1.0
+  version: 0.2.0
+  description: |
+    Pilot identity and site API. Requests use the configured dashboard host.
+    Login and registration set a host-only Secure HttpOnly SameSite=Strict
+    __Host-lumio-session cookie with Path=/. All writes require the exact
+    dashboard Origin. Authenticated writes additionally require X-CSRF-Token
+    from getMe. Password reset tokens are issued by an operator, expire after
+    30 minutes and revoke all sessions when redeemed.
 paths:
   /api/status:
     get:
@@ -19,3 +26,192 @@ paths:
                   status:
                     type: string
                     enum: [ok]
+        default:
+          $ref: '#/components/responses/Error'
+  /api/auth/register:
+    post:
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Registration'
+      responses:
+        '204':
+          description: Success
+        default:
+          $ref: '#/components/responses/Error'
+  /api/auth/login:
+    post:
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+      responses:
+        '204':
+          description: Success
+        default:
+          $ref: '#/components/responses/Error'
+  /api/auth/logout:
+    post:
+      operationId: logout
+      responses:
+        '204':
+          description: Success
+        default:
+          $ref: '#/components/responses/Error'
+  /api/auth/reset-password:
+    post:
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+      responses:
+        '204':
+          description: Success
+        default:
+          $ref: '#/components/responses/Error'
+  /api/auth/me:
+    get:
+      operationId: getMe
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Viewer'
+        default:
+          $ref: '#/components/responses/Error'
+  /api/sites:
+    get:
+      operationId: listSites
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sites'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createSite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteInput'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        default:
+          $ref: '#/components/responses/Error'
+  /api/sites/{id}:
+    get:
+      operationId: getSite
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: renameSite
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteInput'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  responses:
+    Error:
+      description: Request failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: {type: string}
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string, maxLength: 254}
+        password: {type: string, minLength: 12, maxLength: 128}
+    Registration:
+      type: object
+      required: [email, password, invitation]
+      properties:
+        email: {type: string, maxLength: 254}
+        password: {type: string, minLength: 12, maxLength: 128}
+        invitation: {type: string, minLength: 26, maxLength: 26}
+    PasswordReset:
+      type: object
+      required: [token, password]
+      properties:
+        token: {type: string, minLength: 26, maxLength: 26}
+        password: {type: string, minLength: 12, maxLength: 128}
+    Viewer:
+      type: object
+      required: [id, email, csrfToken, baseDomain]
+      properties:
+        id: {type: string}
+        email: {type: string}
+        csrfToken: {type: string}
+        baseDomain: {type: string}
+    SiteInput:
+      type: object
+      required: [slug]
+      properties:
+        slug: {type: string, minLength: 1, maxLength: 100}
+    Site:
+      type: object
+      required: [id, slug, createdAt]
+      properties:
+        id: {type: string}
+        slug: {type: string}
+        createdAt: {type: string, format: date-time}
+    Sites:
+      type: array
+      items:
+        $ref: '#/components/schemas/Site'

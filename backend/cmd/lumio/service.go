@@ -5,11 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/nightnoryu/go-kita/log"
 	"github.com/nightnoryu/go-kita/postgresql"
 
+	"lumio/data/migrations"
+	"lumio/internal/app"
+	"lumio/internal/infrastructure/password"
+	"lumio/internal/infrastructure/postgres"
 	httptransport "lumio/internal/transport/http"
 	"lumio/internal/webui"
 )
@@ -29,11 +34,22 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 			logger.Error(err, "close PostgreSQL")
 		}
 	}()
+	migrator, err := db.Migrator(logger, migrations.UpFS)
+	if err != nil {
+		return err
+	}
+	if err = migrator.MigrateUp(ctx); err != nil {
+		return err
+	}
+	identity := &app.Service{Store: &postgres.Store{DB: db.TransactionalClient()}, Passwords: password.Argon{}}
+	if len(os.Args) > 1 {
+		return operatorCommand(ctx, identity, cfg, os.Args[1:])
+	}
 	assets, err := webui.Assets()
 	if err != nil {
 		return err
 	}
-	router, err := httptransport.NewRouter(assets, db.Ping, logger)
+	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain})
 	if err != nil {
 		return err
 	}

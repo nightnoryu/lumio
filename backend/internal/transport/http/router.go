@@ -13,8 +13,13 @@ import (
 	"lumio/api/server/publicapi"
 )
 
-func NewRouter(assets fs.FS, ping health.Check, logger log.Logger) (http.Handler, error) {
-	api, err := publicapi.NewServer(statusHandler{})
+func NewRouter(assets fs.FS, ping health.Check, logger log.Logger, configs ...APIConfig) (http.Handler, error) {
+	config := APIConfig{}
+	if len(configs) > 0 {
+		config = configs[0]
+	}
+	handler := &apiHandler{config: config, logger: logger}
+	api, err := publicapi.NewServer(handler)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +38,7 @@ func NewRouter(assets fs.FS, ping health.Check, logger log.Logger) (http.Handler
 	router := mux.NewRouter()
 	router.Handle("/livez", live).Methods(http.MethodGet)
 	router.Handle("/healthz", ready).Methods(http.MethodGet)
-	router.PathPrefix("/api/").Handler(api)
+	router.PathPrefix("/api/").Handler(handler.middleware(api))
 	router.Handle("/api", http.NotFoundHandler())
 	router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets))).Methods(http.MethodGet, http.MethodHead)
 	router.Handle("/", http.FileServer(http.FS(assets))).Methods(http.MethodGet, http.MethodHead)

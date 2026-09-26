@@ -24,6 +24,8 @@ services:
   lumio:
     build: backend
     environment:
+      LUMIO_DASHBOARD_ORIGIN: http://localhost:3000
+      LUMIO_BASE_DOMAIN: localhost
       LUMIO_DB_HOST: lumio-db
       LUMIO_DB_PORT: 5432
       LUMIO_DB_NAME: lumio
