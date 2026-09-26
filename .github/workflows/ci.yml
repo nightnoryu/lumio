@@ -5,9 +5,8 @@ on:
     paths: &code-paths
       - 'backend/**'
       - 'web/**'
-      - 'mise.toml'
       - 'api/**'
-      - 'compose.yml'
+      - 'mise.toml'
       - '.github/workflows/ci.yml'
   push:
     branches: [ main ]
