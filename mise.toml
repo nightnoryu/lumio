@@ -56,14 +56,21 @@ run = """ogen --clean \
 --package publicapi \
 --config ./backend/api/server/publicapi/.ogen.yml \
 ./api/publicapi.yml"""
+sources = [
+    "api/publicapi.yml",
+    "backend/api/server/publicapi/.ogen.yml",
+]
+outputs = [ "backend/api/server/publicapi/*_gen.go" ]
 
 [tasks."backend:build"]
 dir = "backend"
 depends = [ "backend:generate", "backend:modules" ]
-run = """go build \
--trimpath -v \
--o ./bin/lumio ./cmd/lumio
-"""
+run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
+sources = [
+    "go.*",
+    "**/*.go",
+]
+outputs = [ "bin/lumio" ]
 
 [tasks."web:modules"]
 dir = "web"
