@@ -73,6 +73,7 @@ run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
     "go.*",
     "**/*.go",
+    "data/migrations/*.up.sql",
     "internal/webui/dist/**/*",
 ]
 outputs = [ "bin/lumio" ]
@@ -98,11 +99,11 @@ run = [
 
 [tasks.test]
 run = [
-    { task = "backend:test" },
-    # { task = "web:test" },
+    { task = "backend:test:unit" },
+    { task = "web:test" },
 ]
 
-[tasks."backend:test"]
+[tasks."backend:test:unit"]
 dir = "backend"
 depends = [ "backend:generate", "web:build" ]
 run = "go test ./..."
@@ -122,9 +123,19 @@ run = [
 [tasks."backend:lint"]
 dir = "backend"
 depends = [ "backend:generate", "web:build" ]
-run = [ "golangci-lint run", "golangci-lint fmt --diff" ]
+run = [ "golangci-lint run --build-tags e2e", "golangci-lint fmt --diff" ]
 
 [tasks."web:lint"]
 dir = "web"
 depends = [ "web:modules" ]
 run = [ "pnpm exec tsc --noEmit", "pnpm run lint" ]
+
+[tasks."web:generate"]
+dir = "web"
+depends = [ "web:modules" ]
+run = "pnpm run generate"
+
+[tasks."backend:test:e2e"]
+dir = "backend"
+depends = [ "backend:generate" ]
+run = "go test -tags e2e ./test/e2e/..."

@@ -69,13 +69,15 @@ LUMIO_DB_PASSWORD=lumio-local-only \
 ./backend/bin/lumio
 ```
 
-The current mise build targets Linux amd64. Open `http://localhost:8080`. `/api/status` returns `{"status":"ok"}`.
+The current mise build targets Linux amd64. Set `LUMIO_DASHBOARD_ORIGIN=http://localhost:8080` to open the standalone dashboard at `http://localhost:8080`. `/api/status` returns `{"status":"ok"}`.
 `/livez` checks process liveness; `/healthz` checks PostgreSQL readiness and
-returns 503 if unavailable. Startup verifies database connectivity. SIGINT
+returns 503 if unavailable. Startup verifies database connectivity and applies embedded PostgreSQL migrations under an advisory lock. SIGINT
 and SIGTERM allow up to 10 seconds for active requests to finish.
 
 | Environment variable | Default | Meaning |
 | --- | --- | --- |
+| `LUMIO_DASHBOARD_ORIGIN` | `http://localhost:3000` | Exact dashboard origin; HTTPS required except on localhost |
+| `LUMIO_BASE_DOMAIN` | `localhost` | Portfolio base domain; production dashboard must use `app.<base domain>` |
 | `LUMIO_SERVE_REST_ADDRESS` | `:8080` | HTTP listen address |
 | `LUMIO_LOG_LEVEL` | `info` | Structured JSON log level |
 | `LUMIO_DB_HOST` | required | PostgreSQL host |
@@ -102,12 +104,74 @@ As business features are introduced, put pure entities and invariants in
 `backend/internal/infrastructure/`. Dependencies point inward: application
 code imports domain code, adapters implement application interfaces, and HTTP
 handlers call use cases. Domain code must not import HTTP, SQL, SDK, or
-infrastructure packages. These directories will be created when they contain
-real code. The current status endpoint is presentation-only.
+infrastructure packages. Repositories use go-kita over pgx with parameterized SQL, following Cadence.
+Invitation redemption and password resets use explicit transactions. Every private
+site query includes the authenticated owner; multiple sites per account are supported
+in storage and API, while the initial UI offers one.
 
 The OpenAPI contract is `api/publicapi.yml`; generated files in
-`backend/api/server/publicapi/` must not be edited manually. Phase 1 contains
-no authentication, database schema, uploads, or portfolio pages.
+`backend/api/server/publicapi/` must not be edited manually. The TypeScript schema is generated with `openapi-typescript` and consumed through
+`openapi-fetch`; `pnpm run generate` in `web/` regenerates it.
+
+## Pilot accounts
+
+Issue an email-bound invitation (valid for seven days):
+
+```sh
+docker compose exec lumio /app/bin/lumio invite anna@example.com
+```
+
+Give the printed code to that photographer privately. They can choose **Have an
+invitation? Create an account**, enter the same email, and set a password of
+12–128 bytes. Codes are consumed atomically on successful registration. The
+server stores token hashes, never the raw invitation or session tokens.
+
+Accounts use Argon2id (64 MiB, three iterations) and seven-day database sessions.
+Cookies always use `__Host-lumio-session`, `Secure`, `HttpOnly`, `Path=/`, and
+`SameSite=Strict`, with no Domain attribute. Local development uses the browser's
+localhost secure-cookie exception; use the literal `localhost`, not an IP address.
+Production requires HTTPS at the configured dashboard origin. State-changing API
+requests require that exact `Origin`; authenticated writes also require
+`X-CSRF-Token` from `GET /api/auth/me`. API responses are not cached.
+
+The pilot uses operator-assisted password recovery:
+
+```sh
+docker compose exec lumio /app/bin/lumio reset-link anna@example.com
+```
+
+Verify the requester's ownership of that email and deliver the printed link
+privately to that address. Links expire after 30 minutes, replace any previous
+reset link, and can be used once. The token is in the URL fragment and is removed
+from the address bar by the dashboard. Resetting a password revokes all sessions.
+There is no public reset-request endpoint or email delivery integration yet.
+Do not send invitation codes or reset links to shared logs or channels.
+
+The schema uses singular table names: `user`, `session`, `site`, `invitation`,
+`password_reset`, and go-kita's `schema_migration`. Timestamped up/down migrations
+live in `backend/data/migrations/`; only up migrations run automatically. Add new
+migrations rather than editing applied ones.
+
+Unit tests run with `mise run test` (or `mise run backend:test:unit` for Go
+only) and do not require Docker. E2E tests are separate, under
+`backend/test/e2e/`, with the `e2e` build tag, following Cadence:
+
+```sh
+mise run backend:test:e2e
+```
+
+E2E tests require a running Docker daemon. Testcontainers starts a disposable
+PostgreSQL container on a dynamic port and removes it after the test. Requests
+run through an HTTPS test server. No development database or database credentials
+are needed. CI runs the E2E task separately after the regular build and checks.
+Coverage includes invitation redemption, ownership, CSRF/Origin validation,
+sessions, logout, and password recovery. React tests exercise sign-in, site
+creation and sign-out.
+
+The dashboard reserves a subdomain and displays its private status. Uploads,
+editing, and publication belong to later phases. Authentication concurrency is
+bounded to protect Argon2 memory usage; full abuse rate limiting belongs to Phase
+6. Expired records cannot authenticate but are not yet periodically pruned.
 
 ## 📜 License
 

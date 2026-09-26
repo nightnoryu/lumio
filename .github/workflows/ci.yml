@@ -30,3 +30,6 @@ jobs:
 
       - name: Run full build
         run: mise run
+
+      - name: Run E2E tests
+        run: mise run backend:test:e2e
