@@ -9,6 +9,7 @@ info:
     dashboard Origin. Authenticated writes additionally require X-CSRF-Token
     from getMe. Password reset tokens are issued by an operator, expire after
     30 minutes and revoke all sessions when redeemed.
+
 paths:
   /api/status:
     get:
@@ -28,6 +29,7 @@ paths:
                     enum: [ok]
         default:
           $ref: '#/components/responses/Error'
+
   /api/auth/register:
     post:
       operationId: register
@@ -42,6 +44,7 @@ paths:
           description: Success
         default:
           $ref: '#/components/responses/Error'
+
   /api/auth/login:
     post:
       operationId: login
@@ -56,6 +59,7 @@ paths:
           description: Success
         default:
           $ref: '#/components/responses/Error'
+
   /api/auth/logout:
     post:
       operationId: logout
@@ -64,6 +68,7 @@ paths:
           description: Success
         default:
           $ref: '#/components/responses/Error'
+
   /api/auth/reset-password:
     post:
       operationId: resetPassword
@@ -78,6 +83,7 @@ paths:
           description: Success
         default:
           $ref: '#/components/responses/Error'
+
   /api/auth/me:
     get:
       operationId: getMe
@@ -90,6 +96,7 @@ paths:
                 $ref: '#/components/schemas/Viewer'
         default:
           $ref: '#/components/responses/Error'
+
   /api/sites:
     get:
       operationId: listSites
@@ -119,6 +126,7 @@ paths:
                 $ref: '#/components/schemas/Site'
         default:
           $ref: '#/components/responses/Error'
+
   /api/sites/{id}:
     get:
       operationId: getSite
@@ -158,6 +166,7 @@ paths:
                 $ref: '#/components/schemas/Site'
         default:
           $ref: '#/components/responses/Error'
+
   /api/sites/{id}/photos:
     get:
       operationId: listPhotos
@@ -197,6 +206,7 @@ paths:
                 $ref: "#/components/schemas/Upload"
         default:
           $ref: "#/components/responses/Error"
+
   /api/sites/{id}/photos/{photoId}:
     delete:
       operationId: deletePhoto
@@ -214,6 +224,7 @@ paths:
           description: Success
         default:
           $ref: "#/components/responses/Error"
+
   /api/sites/{id}/photos/{photoId}/complete:
     post:
       operationId: completeUpload
@@ -231,6 +242,7 @@ paths:
           description: Success
         default:
           $ref: "#/components/responses/Error"
+
   /api/sites/{id}/photos/{photoId}/preview:
     get:
       operationId: previewPhoto
@@ -252,6 +264,7 @@ paths:
                 $ref: "#/components/schemas/Preview"
         default:
           $ref: "#/components/responses/Error"
+
   /api/sites/{id}/draft:
     get:
       operationId: getDraft
@@ -288,6 +301,7 @@ paths:
               schema: {$ref: '#/components/schemas/Draft'}
         default:
           $ref: '#/components/responses/Error'
+
   /api/sites/{id}/publication:
     parameters:
       - name: id
@@ -330,6 +344,7 @@ paths:
           description: Unpublished
         default:
           $ref: '#/components/responses/Error'
+
 components:
   responses:
     Error:
@@ -338,18 +353,21 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+
   schemas:
     Error:
       type: object
       required: [message]
       properties:
         message: {type: string}
+
     Credentials:
       type: object
       required: [email, password]
       properties:
         email: {type: string, maxLength: 254}
         password: {type: string, minLength: 12, maxLength: 128}
+
     Registration:
       type: object
       required: [email, password, invitation]
@@ -357,12 +375,14 @@ components:
         email: {type: string, maxLength: 254}
         password: {type: string, minLength: 12, maxLength: 128}
         invitation: {type: string, minLength: 26, maxLength: 26}
+
     PasswordReset:
       type: object
       required: [token, password]
       properties:
         token: {type: string, minLength: 26, maxLength: 26}
         password: {type: string, minLength: 12, maxLength: 128}
+
     Viewer:
       type: object
       required: [id, email, csrfToken, baseDomain]
@@ -371,11 +391,13 @@ components:
         email: {type: string}
         csrfToken: {type: string}
         baseDomain: {type: string}
+
     SiteInput:
       type: object
       required: [slug]
       properties:
         slug: {type: string, minLength: 1, maxLength: 100}
+
     Site:
       type: object
       required: [id, slug, createdAt]
@@ -383,10 +405,12 @@ components:
         id: {type: string}
         slug: {type: string}
         createdAt: {type: string, format: date-time}
+
     Sites:
       type: array
       items:
         $ref: '#/components/schemas/Site'
+
     UploadInput:
       type: object
       required: [name, contentType, size, watermark]
@@ -395,6 +419,7 @@ components:
         contentType: {type: string, enum: [image/jpeg, image/png, image/webp]}
         size: {type: integer, format: int64, minimum: 1}
         watermark: {type: string, maxLength: 80}
+
     Photo:
       type: object
       required: [id, name, status, width, height, size]
@@ -405,9 +430,11 @@ components:
         width: {type: integer}
         height: {type: integer}
         size: {type: integer, format: int64}
+
     Photos:
       type: array
       items: {$ref: '#/components/schemas/Photo'}
+
     Upload:
       description: |
         PUT the file bytes directly to url with Content-Type matching the upload
@@ -419,11 +446,13 @@ components:
       properties:
         id: {type: string}
         url: {type: string}
+
     Preview:
       type: object
       required: [url]
       properties:
         url: {type: string}
+
     Draft:
       type: object
       required: [version, displayName, biography, location, specialization, profilePhoto, coverPhoto, template, typography, colour, layout, photos, services, contacts, hidePrices]
@@ -454,6 +483,7 @@ components:
           type: array
           maxItems: 12
           items: {$ref: '#/components/schemas/Contact'}
+
     DraftPhoto:
       type: object
       required: [id, alt, category]
@@ -461,6 +491,7 @@ components:
         id: {type: string, format: uuid}
         alt: {type: string, maxLength: 300}
         category: {type: string, maxLength: 80}
+
     PortfolioService:
       type: object
       required: [name, description, price]
@@ -468,12 +499,14 @@ components:
         name: {type: string, minLength: 1, maxLength: 120}
         description: {type: string, maxLength: 1000}
         price: {type: string, maxLength: 100}
+
     Contact:
       type: object
       required: [label, url]
       properties:
         label: {type: string, minLength: 1, maxLength: 60}
         url: {type: string, minLength: 1, maxLength: 500}
+
     Publication:
       type: object
       required: [published, version, url]
