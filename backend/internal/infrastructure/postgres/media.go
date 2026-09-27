@@ -56,16 +56,30 @@ func (s *Store) QueuePhoto(ctx context.Context, user, site, id string) error {
 	return err
 }
 func (s *Store) DeletePhoto(ctx context.Context, user, site, id string) error {
-	result, err := s.DB.ExecContext(ctx, `UPDATE photo SET status='deleted',available_at=greatest(available_at,expires_at,now())+interval '1 minute' WHERE id=$1 AND site_id=$2 AND EXISTS(SELECT 1 FROM site WHERE id=$2 AND user_id=$3)`, id, site, user)
-	if err != nil {
+	return s.transaction(ctx, func(tx postgresql.Transaction) error {
+		var locked string
+		if err := tx.GetContext(ctx, &locked, `SELECT id FROM site WHERE id=$1 AND user_id=$2 FOR UPDATE`, site, user); err != nil {
+			return translate(err)
+		}
+		var used bool
+		if err := tx.GetContext(ctx, &used, `SELECT EXISTS(SELECT 1 FROM (SELECT document FROM site_draft WHERE site_id=$1 UNION ALL SELECT document FROM site_revision WHERE site_id=$1) documents WHERE document->>'profilePhoto'=$2 OR document->>'coverPhoto'=$2 OR document->'photos' @> jsonb_build_array(jsonb_build_object('id',$2::text)))`, site, id); err != nil {
+			return err
+		}
+		if used {
+			return domain.InvalidDraft("This photograph is used by a portfolio. Remove it from the draft and save before deleting it; published revision photos must be retained.")
+		}
+		result, err := tx.ExecContext(ctx, `UPDATE photo SET status='deleted',available_at=greatest(available_at,expires_at,now())+interval '1 minute' WHERE id=$1 AND site_id=$2`, id, site)
+		if err != nil {
+			return err
+		}
+		n, err := result.RowsAffected()
+		if err == nil && n == 0 {
+			return domain.ErrNotFound
+		}
 		return err
-	}
-	n, err := result.RowsAffected()
-	if err == nil && n == 0 {
-		return domain.ErrNotFound
-	}
-	return err
+	})
 }
+
 func (s *Store) ClaimPhoto(ctx context.Context) (domain.Photo, error) {
 	var p domain.Photo
 	err := s.DB.GetContext(ctx, &p, `UPDATE photo SET status='processing',attempts=attempts+1,lease=$1,available_at=now()+interval '10 minutes' WHERE id=(SELECT id FROM photo WHERE status IN ('queued','processing') AND available_at<=now() ORDER BY available_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING `+photoColumns, app.Token())

@@ -252,6 +252,42 @@ paths:
                 $ref: "#/components/schemas/Preview"
         default:
           $ref: "#/components/responses/Error"
+  /api/sites/{id}/draft:
+    get:
+      operationId: getDraft
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Private draft
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Draft'}
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      operationId: saveDraft
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Draft'}
+      responses:
+        '200':
+          description: Private draft
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Draft'}
+        default:
+          $ref: '#/components/responses/Error'
 components:
   responses:
     Error:
@@ -346,3 +382,51 @@ components:
       required: [url]
       properties:
         url: {type: string}
+    Draft:
+      type: object
+      required: [version, displayName, biography, location, specialization, profilePhoto, coverPhoto, template, typography, colour, layout, photos, services, contacts, hidePrices]
+      properties:
+        version: {type: integer, format: int64, minimum: 0}
+        displayName: {type: string, maxLength: 120}
+        biography: {type: string, maxLength: 4000}
+        location: {type: string, maxLength: 160}
+        specialization: {type: string, maxLength: 160}
+        profilePhoto: {type: string, maxLength: 36}
+        coverPhoto: {type: string, maxLength: 36}
+        template: {type: string, enum: [gallery, editorial]}
+        typography: {type: string, enum: [serif, sans]}
+        colour: {type: string, enum: [light, dark, warm]}
+        layout: {type: string, enum: [grid, column]}
+        hidePrices: {type: boolean}
+        photos:
+          type: array
+          maxItems: 100
+          items: {$ref: '#/components/schemas/DraftPhoto'}
+        services:
+          type: array
+          maxItems: 20
+          items: {$ref: '#/components/schemas/PortfolioService'}
+        contacts:
+          type: array
+          maxItems: 12
+          items: {$ref: '#/components/schemas/Contact'}
+    DraftPhoto:
+      type: object
+      required: [id, alt, category]
+      properties:
+        id: {type: string, format: uuid}
+        alt: {type: string, maxLength: 300}
+        category: {type: string, maxLength: 80}
+    PortfolioService:
+      type: object
+      required: [name, description, price]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 120}
+        description: {type: string, maxLength: 1000}
+        price: {type: string, maxLength: 100}
+    Contact:
+      type: object
+      required: [label, url]
+      properties:
+        label: {type: string, minLength: 1, maxLength: 60}
+        url: {type: string, minLength: 1, maxLength: 500}

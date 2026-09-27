@@ -70,7 +70,7 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 	if err != nil {
 		return err
 	}
-	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Media: media, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain})
+	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Media: media, Portfolio: &app.Portfolio{Store: &postgres.Store{DB: db.TransactionalClient()}, Media: media}, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain})
 	if err != nil {
 		return err
 	}

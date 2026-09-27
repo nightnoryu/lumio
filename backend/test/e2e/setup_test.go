@@ -92,7 +92,7 @@ func newIdentityFixture(t *testing.T, objects ...app.ObjectStore) *identityFixtu
 	if len(objects) > 0 {
 		media = &app.Media{Store: &postgres.Store{DB: db.TransactionalClient()}, Objects: objects[0], Limits: domain.MediaLimits{FileBytes: 52428800, StorageBytes: 2147483648, Photos: 100}}
 	}
-	handler, err := httptransport.NewRouter(fstest.MapFS{"index.html": {Data: []byte("Lumio")}}, db.Ping, logger, httptransport.APIConfig{Service: service, Media: media, Origin: testOrigin, BaseDomain: "lumio.test"})
+	handler, err := httptransport.NewRouter(fstest.MapFS{"index.html": {Data: []byte("Lumio")}}, db.Ping, logger, httptransport.APIConfig{Service: service, Media: media, Portfolio: &app.Portfolio{Store: &postgres.Store{DB: db.TransactionalClient()}, Media: media}, Origin: testOrigin, BaseDomain: "lumio.test"})
 	if err != nil {
 		t.Fatal(err)
 	}

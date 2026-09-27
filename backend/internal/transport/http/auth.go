@@ -22,6 +22,7 @@ const cookieName = "__Host-lumio-session"
 type APIConfig struct {
 	Service    *app.Service
 	Media      *app.Media
+	Portfolio  *app.Portfolio
 	Origin     string
 	BaseDomain string
 }
@@ -105,8 +106,13 @@ func (h *apiHandler) RenameSite(ctx context.Context, req *publicapi.SiteInput, p
 	return apiSite(site), err
 }
 func (h *apiHandler) NewError(_ context.Context, err error) *publicapi.ErrorStatusCode {
+	var draftError *domain.DraftError
 	status, message := http.StatusInternalServerError, "Something went wrong. Please try again."
 	switch {
+	case errors.As(err, &draftError):
+		status, message = http.StatusBadRequest, draftError.Message
+	case errors.Is(err, domain.ErrDraftConflict):
+		status, message = http.StatusConflict, "This draft changed in another window. Reload before saving again."
 	case errors.Is(err, domain.ErrMediaQuota):
 		status, message = http.StatusConflict, "Photo or storage quota reached. Remove unused photos and wait for cleanup before retrying."
 	case errors.Is(err, domain.ErrMediaInput):
@@ -181,7 +187,7 @@ func (h *apiHandler) middleware(next *publicapi.Server) http.Handler {
 			writeError(w, http.StatusUnsupportedMediaType, "Expected application/json")
 			return
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, 4096)
+		r.Body = http.MaxBytesReader(w, r.Body, requestBodyLimit(r.URL.Path))
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestKey{}, state)))
 	})
 }
@@ -206,4 +212,11 @@ func (h *apiHandler) authorize(w http.ResponseWriter, r *http.Request, write boo
 		return state, false
 	}
 	return state, true
+}
+
+func requestBodyLimit(path string) int64 {
+	if strings.HasSuffix(path, "/draft") {
+		return 512 * 1024
+	}
+	return 4096
 }

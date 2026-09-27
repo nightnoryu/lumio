@@ -66,9 +66,13 @@ sources = [
 ]
 outputs = [ "backend/api/server/publicapi/*_gen.go" ]
 
+[tasks."backend:templates"]
+dir = "backend"
+run = "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate"
+
 [tasks."backend:build"]
 dir = "backend"
-depends = [ "backend:generate", "backend:modules", "web:build" ]
+depends = [ "backend:generate", "backend:templates", "backend:modules", "web:build" ]
 run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
     "go.*",
