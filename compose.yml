@@ -35,6 +35,7 @@ services:
       LUMIO_DB_NAME: lumio
       LUMIO_DB_USER: lumio
       LUMIO_DB_PASSWORD: ${LUMIO_DB_PASSWORD:-lumio-local-only}
+      LUMIO_METRICS_ADDRESS: 0.0.0.0:9090
       LUMIO_DB_MAX_CONN: 10
       LUMIO_DB_CONN_LIFETIME: 60s
     volumes:
@@ -45,6 +46,10 @@ services:
       - "traefik.http.services.lumio-api.loadbalancer.server.port=8080"
       - "traefik.http.routers.lumio-public.rule=HostRegexp(`^[a-z0-9-]+\\.localhost$`)"
       - "traefik.http.routers.lumio-public.service=lumio-api"
+      - "traefik.http.middlewares.lumio-compress.compress=true"
+      - "traefik.http.middlewares.lumio-compress.compress.excludedcontenttypes=image/jpeg,image/png,image/webp"
+      - "traefik.http.routers.lumio-api.middlewares=lumio-compress"
+      - "traefik.http.routers.lumio-public.middlewares=lumio-compress"
     depends_on:
       lumio-storage-init:
         condition: service_completed_successfully

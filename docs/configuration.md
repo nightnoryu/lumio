@@ -104,3 +104,66 @@ wildcard DNS/ingress to the Go service. Forward the original Host header; forwar
 host/protocol headers are not used for tenant resolution or canonical URLs.
 The local defaults produce `http://anna.localhost:3000/` for the slug `anna`.
 Unknown, unpublished, nested, reserved or malformed portfolio hostnames return 404.
+
+### HTTP caching, security and observability
+
+The production executable embeds the dashboard, recovery script and portfolio viewer.
+Only `/` is a dashboard page today; unknown paths, missing assets and unknown API
+routes return 404. Add explicit dashboard routes if client routing is introduced.
+Hashed JS/CSS assets use one year of immutable caching. HTML, the recovery script
+and the portfolio viewer revalidate. API responses, previews and public HTML use
+`no-store`. Published image URLs include the immutable revision and variant index;
+they use `private, no-cache` and ETags. Each reuse checks the active publication
+before returning 304, so unpublishing also revokes cached URLs. Already downloaded
+photographs cannot be recalled. Revalidation currently opens the S3 object but
+avoids retransmitting its body.
+
+Old dashboard assets are not retained. A stable `/recovery.js`, loaded before
+bundles, catches missing JS/CSS and dynamic imports and offers a reload. It never
+reloads automatically, preserving an open editor until the user chooses to reload.
+The reload revalidates HTML and loads current assets without clearing the session.
+This strategy applies to HTML delivered from this release onward. Deploy a single
+web replica or switch traffic atomically; mixed old/new replicas need shared asset
+retention. Verify recovery when changing the frontend build or loader.
+
+Security headers apply to every application response. Scripts are restricted to
+the same origin; the dashboard permits uploads and previews only at the configured
+`LUMIO_S3_PUBLIC_ENDPOINT`. Inline styles remain permitted for templ styles and
+Uppy. HTTPS origins enable HSTS. Cookies remain host-only, Secure, HttpOnly and
+SameSite=Strict; public sites never set dashboard cookies.
+
+Authentication attempts share a 10/minute limit per client IP. Authenticated API
+access is limited to 600/minute per IP, writes to 120/minute per account, and photo
+writes to 60/minute per account. Limits are per web process, reset on restart, and
+return 429 with `Retry-After: 60`. Direct presigned S3 PUTs are bounded by upload
+reservations, expiry, size validation and quotas rather than the Go request limiter.
+`LUMIO_TRUSTED_PROXY_CIDRS` is a comma-separated list of proxy CIDRs (empty by
+default). Only socket peers in these ranges may supply `X-Forwarded-For`; chains
+are read from the right, stopping at the first untrusted address. Configure the
+actual ingress CIDR and restrict direct access to the Go port. Never trust all
+addresses. Without trusted proxies, clients behind ingress share its IP limit.
+
+`LUMIO_METRICS_ADDRESS` defaults to `127.0.0.1:9090`; an empty value disables it.
+The web process and worker each serve a private Prometheus registry at `/metrics`
+on this separate listener. Set distinct ports when running both on one host.
+Compose uses `0.0.0.0:9090` within each container without publishing it or routing it
+through Traefik. Scrape both processes over the private network; do not expose this
+listener through public ingress. Runtime/process metrics accompany
+`lumio_http_requests_total`, `lumio_http_request_duration_seconds`,
+`lumio_media_operations_total` and `lumio_media_operation_duration_seconds`.
+Media operations are `upload_create`, `upload_complete`, `process`, and `cleanup`;
+outcomes are `success`, `error`, and `exhausted` for abandoned processing attempts.
+Job metrics count attempts, not unique photographs. `upload_complete` measures
+backend verification/queueing, not browser-to-S3 transfer time.
+
+Logging follows anon3anon: go-kita JSON logs with `LUMIO_LOG_LEVEL`, structured
+route/status/duration fields for requests and operation/outcome/duration for media.
+Request summaries omit URLs, query strings, cookies, bodies and client identifiers;
+metric labels use bounded route/operation names. Health requests are not logged.
+
+Traefik is the sole compression layer. Compose attaches `lumio-compress` to the Go
+API and public-site routers, excluding JPEG/PNG/WebP. The application does not
+compress responses. Attach the equivalent middleware to all production Go routers
+(including the embedded dashboard) when implementing Phase 7 ingress. Local Vite
+serves the development dashboard, so production asset/header checks must target
+the Go server, not Vite.
