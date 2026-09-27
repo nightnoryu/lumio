@@ -1,6 +1,7 @@
 import {useEffect, useState, type FormEvent} from "react";
 import {api, failure, type Site, type Viewer} from "./api/client";
 
+import {Editor} from "./Editor";
 import {Photos} from "./Photos";
 
 type Mode = "login" | "register" | "reset";
@@ -96,6 +97,7 @@ export function App() {
                     {sites.length ? <ul className="sites">{sites.map(site => <li key={site.id}>
                         <h2>{site.slug}.{viewer.baseDomain}</h2>
                         <span className="badge">Private draft</span>
+                        <Editor siteId={site.id} csrf={viewer.csrfToken} />
                         <Photos siteId={site.id} csrf={viewer.csrfToken} />
                     </li>)}</ul> : <form onSubmit={submit}>
                         <p className="intro">Choose a home for your photography.</p>

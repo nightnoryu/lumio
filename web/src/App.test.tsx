@@ -1,3 +1,4 @@
+vi.mock("./Editor", () => ({Editor: () => <div>Portfolio editor</div>}));
 vi.mock("./Photos", () => ({Photos: () => <div>Photographs</div>}));
 // @vitest-environment jsdom
 import {fireEvent, render, screen, waitFor, cleanup} from "@testing-library/react";

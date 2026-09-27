@@ -14,6 +14,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
     const watermark = useRef<HTMLInputElement>(null);
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [previews, setPreviews] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [revision, setRevision] = useState(0);
     useEffect(() => {
@@ -22,7 +23,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
             const result = await api.GET("/api/sites/{id}/photos", {params: {path: {id: siteId}}});
             if (!result.data) throw failure(result.error);
             if (!active) return;
-            setPhotos(result.data);
+            setPhotos(result.data); setLoading(false);
             const images: Record<string, string> = {};
             await Promise.all(result.data.filter(p => p.status === "ready").map(async p => {
                 const cached = previewCache.current[p.id];
@@ -35,7 +36,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
             }));
             if (active) setPreviews(images);
         }
-        const poll = () => { void refresh().catch((err: unknown) => {if (active) setError(failure(err).message);}); };
+        const poll = () => { void refresh().catch((err: unknown) => {if (active) {setError(failure(err).message); setLoading(false);}}); };
         poll();
         const timer = window.setInterval(poll, 5000);
         return () => {active = false; window.clearInterval(timer);};
@@ -87,7 +88,8 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
         <label>Watermark for new uploads (optional)<input ref={watermark} maxLength={80} placeholder="Your name" aria-label="Watermark" /></label>
         <div ref={target} />
         {error && <p role="alert" className="error">{error}</p>}
-        {!photos.length && <p>No photographs yet.</p>}
+        {loading && <p role="status">Loading photographs…</p>}
+        {!loading && !error && !photos.length && <p>No photographs yet.</p>}
         <ul className="photo-grid">{photos.map(photo => <li key={photo.id}>
             {previews[photo.id] && <img src={previews[photo.id]} alt={photo.name} />}
             <strong>{photo.name}</strong><span>{photo.status}</span>
