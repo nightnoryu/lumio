@@ -10,7 +10,7 @@
 Lumio is a portfolio website builder for photographers. Create a polished
 portfolio, showcase selected work, and share it through a personal website.
 
-## Documentation
+## 📚 Documentation
 
 - [Development](docs/development.md) — local setup, commands, and test workflows
 - [Configuration](docs/configuration.md) — runtime settings and environment variables
@@ -18,6 +18,6 @@ portfolio, showcase selected work, and share it through a personal website.
 - [Pilot operations](docs/pilot-operations.md) — invitations, accounts, and password recovery
 - [Changelog](CHANGELOG.md)
 
-## License
+## 📜 License
 
 Distributed under the MIT License. See [License](/LICENSE) for more information.
