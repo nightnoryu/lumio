@@ -20,6 +20,7 @@ import (
 
 	"lumio/data/migrations"
 	"lumio/internal/app"
+	"lumio/internal/domain"
 	"lumio/internal/infrastructure/password"
 	"lumio/internal/infrastructure/postgres"
 	httptransport "lumio/internal/transport/http"
@@ -37,7 +38,7 @@ type identityFixture struct {
 	server  *httptest.Server
 }
 
-func newIdentityFixture(t *testing.T) *identityFixture {
+func newIdentityFixture(t *testing.T, objects ...app.ObjectStore) *identityFixture {
 	t.Helper()
 	ctx := t.Context()
 	databasePassword := rand.Text()
@@ -87,7 +88,11 @@ func newIdentityFixture(t *testing.T) *identityFixture {
 		t.Fatal("migration replay:", err)
 	}
 	service := &app.Service{Store: &postgres.Store{DB: db.TransactionalClient()}, Passwords: password.Argon{}}
-	handler, err := httptransport.NewRouter(fstest.MapFS{"index.html": {Data: []byte("Lumio")}}, db.Ping, logger, httptransport.APIConfig{Service: service, Origin: testOrigin, BaseDomain: "lumio.test"})
+	var media *app.Media
+	if len(objects) > 0 {
+		media = &app.Media{Store: &postgres.Store{DB: db.TransactionalClient()}, Objects: objects[0], Limits: domain.MediaLimits{FileBytes: 52428800, StorageBytes: 2147483648, Photos: 100}}
+	}
+	handler, err := httptransport.NewRouter(fstest.MapFS{"index.html": {Data: []byte("Lumio")}}, db.Ping, logger, httptransport.APIConfig{Service: service, Media: media, Origin: testOrigin, BaseDomain: "lumio.test"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,0 +1,6 @@
+FROM alpine:3.23.3
+RUN apk add --no-cache ca-certificates vips-tools font-dejavu && addgroup -g 1001 lumio && adduser -u 1001 -D -G lumio lumio
+COPY ./bin/lumio /app/bin/lumio
+USER lumio
+ENV VIPS_CONCURRENCY=2
+ENTRYPOINT ["/app/bin/lumio", "worker"]

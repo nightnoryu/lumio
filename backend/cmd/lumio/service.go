@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/nightnoryu/go-kita/log"
@@ -13,8 +14,11 @@ import (
 
 	"lumio/data/migrations"
 	"lumio/internal/app"
+	"lumio/internal/domain"
+	"lumio/internal/infrastructure/imaging"
 	"lumio/internal/infrastructure/password"
 	"lumio/internal/infrastructure/postgres"
+	"lumio/internal/infrastructure/storage"
 	httptransport "lumio/internal/transport/http"
 	"lumio/internal/webui"
 )
@@ -42,14 +46,31 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 		return err
 	}
 	identity := &app.Service{Store: &postgres.Store{DB: db.TransactionalClient()}, Passwords: password.Argon{}}
-	if len(os.Args) > 1 {
+	if len(os.Args) > 1 && os.Args[1] != "worker" && os.Args[1] != "storage-init" {
 		return operatorCommand(ctx, identity, cfg, os.Args[1:])
+	}
+	objects, err := storage.New(ctx, cfg.S3Endpoint, cfg.S3PublicEndpoint, cfg.S3Region, cfg.S3Bucket, cfg.S3AccessKey, cfg.S3SecretKey)
+	if err != nil {
+		return err
+	}
+	if len(os.Args) > 1 && os.Args[1] == "storage-init" {
+		return objects.Initialize(ctx)
+	}
+	if err = objects.VerifyLifecycle(ctx); err != nil {
+		return err
+	}
+	media := &app.Media{Store: &postgres.Store{DB: db.TransactionalClient()}, Objects: objects, Limits: domain.MediaLimits{FileBytes: cfg.MediaFileBytes, StorageBytes: cfg.MediaStorageBytes, Photos: cfg.MediaPhotos}}
+	if len(os.Args) > 1 && os.Args[1] == "worker" {
+		if _, err = exec.LookPath("vips"); err != nil {
+			return fmt.Errorf("worker requires libvips: %w", err)
+		}
+		return media.Work(ctx, imaging.Vips{}, func(err error) { logger.Error(err, "media worker") })
 	}
 	assets, err := webui.Assets()
 	if err != nil {
 		return err
 	}
-	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain})
+	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Media: media, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain})
 	if err != nil {
 		return err
 	}

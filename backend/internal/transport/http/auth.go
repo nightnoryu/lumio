@@ -21,6 +21,7 @@ const cookieName = "__Host-lumio-session"
 
 type APIConfig struct {
 	Service    *app.Service
+	Media      *app.Media
 	Origin     string
 	BaseDomain string
 }
@@ -106,6 +107,10 @@ func (h *apiHandler) RenameSite(ctx context.Context, req *publicapi.SiteInput, p
 func (h *apiHandler) NewError(_ context.Context, err error) *publicapi.ErrorStatusCode {
 	status, message := http.StatusInternalServerError, "Something went wrong. Please try again."
 	switch {
+	case errors.Is(err, domain.ErrMediaQuota):
+		status, message = http.StatusConflict, "Photo or storage quota reached. Remove unused photos and wait for cleanup before retrying."
+	case errors.Is(err, domain.ErrMediaInput):
+		status, message = http.StatusBadRequest, "Invalid photo. Use JPEG, PNG or WebP within the upload size limit; watermark text must be at most 80 printable ASCII characters."
 	case errors.Is(err, domain.ErrInvalid):
 		status, message = http.StatusBadRequest, "Invalid input. Use a valid email, a 12–128 byte password, and a nonreserved subdomain of 1–63 letters, digits or hyphens."
 	case errors.Is(err, domain.ErrUnauthorized):
@@ -148,6 +153,10 @@ func (h *apiHandler) middleware(next *publicapi.Server) http.Handler {
 		write := r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions
 		if write && (len(r.Header.Values("Origin")) != 1 || r.Header.Get("Origin") != h.config.Origin) {
 			writeError(w, http.StatusForbidden, "Invalid request origin")
+			return
+		}
+		if strings.Contains(r.URL.Path, "/photos") && h.config.Media == nil {
+			writeError(w, http.StatusServiceUnavailable, "Media service unavailable")
 			return
 		}
 		state := requestState{writer: w}

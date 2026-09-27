@@ -16,6 +16,16 @@ import (
 const localhost = "localhost"
 
 type config struct {
+	S3Endpoint        string `env:"S3_ENDPOINT" envDefault:"http://localhost:9000"`
+	S3PublicEndpoint  string `env:"S3_PUBLIC_ENDPOINT" envDefault:"http://localhost:9000"`
+	S3Region          string `env:"S3_REGION" envDefault:"us-east-1"`
+	S3Bucket          string `env:"S3_BUCKET" envDefault:"lumio"`
+	S3AccessKey       string `env:"S3_ACCESS_KEY" envDefault:"lumio-local"`
+	S3SecretKey       string `env:"S3_SECRET_KEY" envDefault:"lumio-local-only"`
+	MediaFileBytes    int64  `env:"MEDIA_FILE_BYTES" envDefault:"52428800"`
+	MediaStorageBytes int64  `env:"MEDIA_STORAGE_BYTES" envDefault:"2147483648"`
+	MediaPhotos       int    `env:"MEDIA_PHOTOS" envDefault:"100"`
+
 	DashboardOrigin  string        `env:"DASHBOARD_ORIGIN" envDefault:"http://localhost:3000"`
 	BaseDomain       string        `env:"BASE_DOMAIN" envDefault:"localhost"`
 	ServeRESTAddress string        `env:"SERVE_REST_ADDRESS" envDefault:":8080"`
@@ -30,6 +40,9 @@ type config struct {
 }
 
 func (c *config) validate() error {
+	if err := c.validateMedia(); err != nil {
+		return err
+	}
 	origin, originErr := url.Parse(c.DashboardOrigin)
 	if originErr != nil || origin.Host == "" || origin.User != nil || origin.Path != "" || origin.RawQuery != "" || origin.Fragment != "" || origin.ForceQuery ||
 		(origin.Scheme != "https" && (origin.Scheme != "http" || origin.Hostname() != localhost)) {
@@ -73,4 +86,21 @@ func (c *config) postgresDSN() postgresql.DSN {
 		Host: c.DBHost, Port: c.DBPort, Database: c.DBName,
 		User: c.DBUser, Password: c.DBPassword,
 	}
+}
+
+func (c *config) validateMedia() error {
+	if c.MediaFileBytes <= 0 || c.MediaFileBytes > 524288000 || c.MediaStorageBytes < c.MediaFileBytes || c.MediaPhotos <= 0 {
+		return errors.New("invalid media limits")
+	}
+	for _, endpoint := range []string{c.S3Endpoint, c.S3PublicEndpoint} {
+		u, err := url.Parse(endpoint)
+		if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" || (u.Path != "" && u.Path != "/") {
+			return errors.New("invalid S3 endpoint")
+		}
+	}
+	if c.S3Bucket == "" || c.S3Region == "" || c.S3AccessKey == "" || c.S3SecretKey == "" {
+		return errors.New("S3 bucket, region and credentials are required")
+	}
+
+	return nil
 }
