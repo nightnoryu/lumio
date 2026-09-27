@@ -79,6 +79,7 @@ sources = [
     "**/*.go",
     "data/migrations/*.up.sql",
     "internal/webui/dist/**/*",
+    "internal/portfolio/viewer.js",
 ]
 outputs = [ "bin/lumio" ]
 

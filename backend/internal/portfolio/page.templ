@@ -2,17 +2,33 @@ package portfolio
 
 import "lumio/internal/domain"
 
-templ Page(d domain.Draft, images map[string]string) {
+templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
+ {{ meta := pageMetadata(d, images, options) }}
  <!DOCTYPE html>
  <html lang="en">
  <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="robots" content="noindex, nofollow"/>
-  <title>{ d.DisplayName } — Photography</title>
-  <style>html{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#faf9f6;color:#242521;font:17px/1.65 Georgia,serif}body.dark{background:#191b1a;color:#f5f3ed;color-scheme:dark}body.warm{background:#eee5d8;color:#40392f}body.sans{font-family:Arial,sans-serif}main{max-width:1280px;margin:auto;padding:48px 5vw}h1{font-size:clamp(2.6rem,7vw,6rem);line-height:1.06;letter-spacing:-.04em;font-weight:400;margin:20px 0}h2{font-size:2rem;font-weight:400}a{color:inherit;text-underline-offset:5px}p{white-space:pre-line}.intro{max-width:760px;margin:0 auto 64px;text-align:center}.profile{width:140px;height:auto}.cover{display:block;max-height:75vh;width:100%;object-fit:contain;margin-bottom:64px}.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;align-items:start}.gallery.column{grid-template-columns:1fr;max-width:900px;margin:auto}figure{margin:0}figure img{display:block;width:100%;height:auto}figcaption{font:14px/1.5 Arial,sans-serif;margin-top:8px;opacity:.75}.editorial .intro{text-align:left;margin-left:0;max-width:900px}.editorial .gallery:not(.column) figure:nth-child(3n+1){grid-column:1/-1}.services{margin:80px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px}.services h2{grid-column:1/-1}article{border-top:1px solid;padding-top:16px}footer{padding:32px 0;border-top:1px solid;display:flex;gap:24px;flex-wrap:wrap}@media(max-width:640px){main{padding:32px 6vw}.gallery{grid-template-columns:1fr;gap:24px}.intro{margin-bottom:32px}.cover{margin-bottom:32px}.services{margin:48px 0}}</style>
+  if meta.Canonical == "" {
+   <meta name="robots" content="noindex, nofollow"/>
+  } else {
+   <link rel="canonical" href={ meta.Canonical }/>
+   <meta property="og:url" content={ meta.Canonical }/>
+  }
+  <title>{ meta.Title }</title>
+  <meta name="description" content={ meta.Description }/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content={ meta.Title }/>
+  <meta property="og:description" content={ meta.Description }/>
+  if meta.Image != "" {
+   <meta property="og:image" content={ meta.Image }/>
+   <meta property="og:image:alt" content={ meta.ImageAlt }/>
+  }
+  <script src="/portfolio.js" defer></script>
+  <style>html{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#faf9f6;color:#242521;font:17px/1.65 Georgia,serif}body.dark{background:#191b1a;color:#f5f3ed;color-scheme:dark}body.warm{background:#eee5d8;color:#40392f}body.sans{font-family:Arial,sans-serif}main{max-width:1280px;margin:auto;padding:48px 5vw}h1{font-size:clamp(2.6rem,7vw,6rem);line-height:1.06;letter-spacing:-.04em;font-weight:400;margin:20px 0}h2{font-size:2rem;font-weight:400}a{color:inherit;text-underline-offset:5px}p{white-space:pre-line}.intro{max-width:760px;margin:0 auto 64px;text-align:center}.profile{width:140px;height:auto}.cover{display:block;max-height:75vh;width:100%;object-fit:contain;margin-bottom:64px}section.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;align-items:start}section.gallery.column{grid-template-columns:1fr;max-width:900px;margin:auto}figure{margin:0}figure img{display:block;width:100%;height:auto}figcaption{font:14px/1.5 Arial,sans-serif;margin-top:8px;opacity:.75}.editorial .intro{text-align:left;margin-left:0;max-width:900px}.editorial section.gallery:not(.column) figure:nth-child(3n+1){grid-column:1/-1}.services{margin:80px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px}.services h2{grid-column:1/-1}article{border-top:1px solid;padding-top:16px}footer{padding:32px 0;border-top:1px solid;display:flex;gap:24px;flex-wrap:wrap}@media(max-width:640px){main{padding:32px 6vw}section.gallery{grid-template-columns:1fr;gap:24px}.intro{margin-bottom:32px}.cover{margin-bottom:32px}.services{margin:48px 0}}dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:20px;border:0;background:#151515;color:white}dialog::backdrop{background:#151515}dialog[open]{display:flex;flex-direction:column;gap:12px}dialog img{min-height:0;flex:1;object-fit:contain;width:100%}.viewer-controls{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}.viewer-controls button{padding:10px 16px;color:inherit;background:transparent;border:1px solid #aaa;font:inherit;cursor:pointer}.viewer-controls button:focus-visible,a:focus-visible{outline:3px solid #9acbff;outline-offset:4px}.viewer-controls p{margin:0}.skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;background:white;color:black;padding:12px}section.gallery a{display:block}</style>
  </head>
  <body class={ d.Colour + " " + d.Typography + " " + d.Template }>
+ <a class="skip" href="#photographs">Skip to photographs</a>
  <main>
   if d.Template == "editorial" {
    @Cover(d.CoverPhoto, images)
@@ -29,6 +45,11 @@ templ Page(d domain.Draft, images map[string]string) {
    }
   </footer>
  </main>
+ <dialog id="photo-viewer" aria-label="Full-screen photograph">
+  <div class="viewer-controls"><button type="button" data-close>Close</button><button type="button" data-previous aria-label="Previous photograph">Previous</button><p aria-live="polite" data-position></p><button type="button" data-next aria-label="Next photograph">Next</button></div>
+  <img data-viewer-image alt=""/>
+  <p data-caption></p>
+ </dialog>
  </body>
  </html>
 }
@@ -49,10 +70,12 @@ templ Cover(id string, images map[string]string) {
  }
 }
 templ Gallery(d domain.Draft, images map[string]string) {
- <section class={ "gallery " + d.Layout } aria-label="Portfolio photographs">
+ <section id="photographs" class={ "gallery " + d.Layout } aria-label="Portfolio photographs">
   for _, p := range d.Photos {
    <figure>
-    <img src={ images[p.ID] } alt={ p.Alt } loading="lazy"/>
+    <a href={ templ.SafeURL(images[p.ID]) } data-photo aria-label={ "View photograph: " + p.Alt }>
+     <img src={ images[p.ID] } alt={ p.Alt } loading="lazy"/>
+    </a>
     if p.Category != "" {
      <figcaption>{ p.Category }</figcaption>
     }

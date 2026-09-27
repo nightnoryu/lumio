@@ -14,6 +14,8 @@ import (
 var ErrDraftConflict = errors.New("draft version conflict")
 
 type Draft struct {
+	SEOTitle       string             `json:"seoTitle"`
+	SEODescription string             `json:"seoDescription"`
 	Version        int64              `json:"version"`
 	DisplayName    string             `json:"displayName"`
 	Biography      string             `json:"biography"`
@@ -66,7 +68,7 @@ func (d Draft) Validate() error {
 	for _, field := range []struct {
 		name, value string
 		limit       int
-	}{{"Display name", d.DisplayName, 120}, {"Biography", d.Biography, 4000}, {"Location", d.Location, 160}, {"Specialization", d.Specialization, 160}} {
+	}{{"SEO title", d.SEOTitle, 120}, {"SEO description", d.SEODescription, 300}, {"Display name", d.DisplayName, 120}, {"Biography", d.Biography, 4000}, {"Location", d.Location, 160}, {"Specialization", d.Specialization, 160}} {
 		if !utf8.ValidString(field.value) || utf8.RuneCountInString(field.value) > field.limit {
 			return InvalidDraft(fmt.Sprintf("%s is too long.", field.name))
 		}

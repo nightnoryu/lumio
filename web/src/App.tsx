@@ -96,7 +96,7 @@ export function App() {
                     <p className="intro">Signed in as {viewer.email}</p>
                     {sites.length ? <ul className="sites">{sites.map(site => <li key={site.id}>
                         <h2>{site.slug}.{viewer.baseDomain}</h2>
-                        <span className="badge">Private draft</span>
+
                         <Editor siteId={site.id} csrf={viewer.csrfToken} />
                         <Photos siteId={site.id} csrf={viewer.csrfToken} />
                     </li>)}</ul> : <form onSubmit={submit}>

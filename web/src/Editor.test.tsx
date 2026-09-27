@@ -3,6 +3,7 @@ import {fireEvent, render, screen, cleanup} from "@testing-library/react";
 import {afterEach, expect, test, vi} from "vitest";
 import {Editor} from "./Editor";
 import {api} from "./api/client";
+vi.mock("./Publishing", () => ({Publishing: () => <div>Publishing controls</div>}));
 vi.mock("./api/client", () => ({api: {GET: vi.fn(), PUT: vi.fn()}, failure: (error: unknown) => error instanceof Error ? error : new Error("Request failed")}));
 afterEach(() => {cleanup(); vi.resetAllMocks();});
 const draft = {version: 0, displayName: "", biography: "", location: "", specialization: "", profilePhoto: "", coverPhoto: "", template: "gallery" as const, typography: "serif" as const, colour: "light" as const, layout: "grid" as const, hidePrices: false, photos: [], services: [], contacts: []};
@@ -25,7 +26,7 @@ test("create a complete private portfolio through the form and save with CSRF", 
     fireEvent.change(screen.getByLabelText("Link label"), {target: {value: "Email"}});
     fireEvent.change(screen.getByLabelText("Contact address"), {target: {value: "mailto:anna@example.com"}});
     fireEvent.click(screen.getByRole("button", {name: "Save draft"}));
-    await screen.findByText("Draft saved. Your portfolio is private.");
+    await screen.findByText("Draft saved. Publish to make these changes public.");
     expect(api.PUT).toHaveBeenCalledWith("/api/sites/{id}/draft", expect.objectContaining({headers: {"X-CSRF-Token": "csrf"}, body: expect.objectContaining({displayName: "Anna", template: "editorial", hidePrices: true, photos: [{id: "photo", alt: "A portrait in sunlight", category: ""}], contacts: [{label: "Email", url: "mailto:anna@example.com"}]})}));
     expect(screen.getByRole("link", {name: /Preview saved/}).getAttribute("href")).toBe("/preview/site");
 });

@@ -62,11 +62,11 @@ func (s *Store) DeletePhoto(ctx context.Context, user, site, id string) error {
 			return translate(err)
 		}
 		var used bool
-		if err := tx.GetContext(ctx, &used, `SELECT EXISTS(SELECT 1 FROM (SELECT document FROM site_draft WHERE site_id=$1 UNION ALL SELECT document FROM site_revision WHERE site_id=$1) documents WHERE document->>'profilePhoto'=$2 OR document->>'coverPhoto'=$2 OR document->'photos' @> jsonb_build_array(jsonb_build_object('id',$2::text)))`, site, id); err != nil {
+		if err := tx.GetContext(ctx, &used, `SELECT EXISTS(SELECT 1 FROM (SELECT document FROM site_draft WHERE site_id=$1 UNION ALL SELECT r.document FROM site_revision r JOIN site s ON s.published_revision=r.id WHERE s.id=$1) documents WHERE document->>'profilePhoto'=$2 OR document->>'coverPhoto'=$2 OR document->'photos' @> jsonb_build_array(jsonb_build_object('id',$2::text)))`, site, id); err != nil {
 			return err
 		}
 		if used {
-			return domain.InvalidDraft("This photograph is used by a portfolio. Remove it from the draft and save before deleting it; published revision photos must be retained.")
+			return domain.InvalidDraft("This photograph is used by a portfolio. Remove it from the draft and save before deleting it; photos on the live site must be retained.")
 		}
 		result, err := tx.ExecContext(ctx, `UPDATE photo SET status='deleted',available_at=greatest(available_at,expires_at,now())+interval '1 minute' WHERE id=$1 AND site_id=$2`, id, site)
 		if err != nil {

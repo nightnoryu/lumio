@@ -143,3 +143,11 @@ func (s *S3) VerifyLifecycle(ctx context.Context) error {
 	}
 	return fmt.Errorf("bucket must expire uploads/ objects after one day")
 }
+
+func (s *S3) Open(ctx context.Context, key string) (io.ReadCloser, int64, error) {
+	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{Bucket: &s.bucket, Key: &key})
+	if err != nil {
+		return nil, 0, err
+	}
+	return result.Body, aws.ToInt64(result.ContentLength), nil
+}

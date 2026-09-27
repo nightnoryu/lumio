@@ -23,6 +23,7 @@ type MediaStore interface {
 	PurgePhoto(context.Context, domain.Photo) error
 }
 type ObjectStore interface {
+	Open(context.Context, string) (io.ReadCloser, int64, error)
 	UploadURL(context.Context, string, string, int64) (string, error)
 	Check(context.Context, string, string, int64) error
 	Promote(context.Context, string, string) error

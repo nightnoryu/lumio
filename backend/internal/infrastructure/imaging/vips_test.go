@@ -35,11 +35,12 @@ func (m *memoryObjects) Put(_ context.Context, key, _ string, r io.Reader) error
 func (*memoryObjects) UploadURL(context.Context, string, string, int64) (string, error) {
 	panic("unused")
 }
-func (*memoryObjects) Promote(context.Context, string, string) error       { panic("unused") }
-func (*memoryObjects) Check(context.Context, string, string, int64) error  { panic("unused") }
-func (*memoryObjects) DeletePrefix(context.Context, string) error          { panic("unused") }
-func (*memoryObjects) PreviewURL(context.Context, string) (string, error)  { panic("unused") }
-func (*memoryObjects) PruneVariants(context.Context, string, string) error { panic("unused") }
+func (*memoryObjects) Open(context.Context, string) (io.ReadCloser, int64, error) { panic("unused") }
+func (*memoryObjects) Promote(context.Context, string, string) error              { panic("unused") }
+func (*memoryObjects) Check(context.Context, string, string, int64) error         { panic("unused") }
+func (*memoryObjects) DeletePrefix(context.Context, string) error                 { panic("unused") }
+func (*memoryObjects) PreviewURL(context.Context, string) (string, error)         { panic("unused") }
+func (*memoryObjects) PruneVariants(context.Context, string, string) error        { panic("unused") }
 func TestVipsImages(t *testing.T) {
 	if _, err := exec.LookPath("vips"); err != nil {
 		t.Skip("run in worker image with libvips")

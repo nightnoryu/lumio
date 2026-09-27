@@ -288,6 +288,48 @@ paths:
               schema: {$ref: '#/components/schemas/Draft'}
         default:
           $ref: '#/components/responses/Error'
+  /api/sites/{id}/publication:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getPublication
+      responses:
+        '200':
+          description: Publication state and canonical URL
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Publication'}
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: publishSite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Published saved draft
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Publication'}
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      operationId: unpublishSite
+      responses:
+        '204':
+          description: Unpublished
+        default:
+          $ref: '#/components/responses/Error'
 components:
   responses:
     Error:
@@ -387,6 +429,8 @@ components:
       required: [version, displayName, biography, location, specialization, profilePhoto, coverPhoto, template, typography, colour, layout, photos, services, contacts, hidePrices]
       properties:
         version: {type: integer, format: int64, minimum: 0}
+        seoTitle: {type: string, maxLength: 120}
+        seoDescription: {type: string, maxLength: 300}
         displayName: {type: string, maxLength: 120}
         biography: {type: string, maxLength: 4000}
         location: {type: string, maxLength: 160}
@@ -430,3 +474,10 @@ components:
       properties:
         label: {type: string, minLength: 1, maxLength: 60}
         url: {type: string, minLength: 1, maxLength: 500}
+    Publication:
+      type: object
+      required: [published, version, url]
+      properties:
+        published: {type: boolean}
+        version: {type: integer, format: int64, minimum: 0}
+        url: {type: string}

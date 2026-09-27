@@ -38,12 +38,13 @@ func NewRouter(assets fs.FS, ping health.Check, logger log.Logger, configs ...AP
 	router := mux.NewRouter()
 	router.Handle("/livez", live).Methods(http.MethodGet)
 	router.Handle("/healthz", ready).Methods(http.MethodGet)
+	router.HandleFunc("/portfolio.js", viewerScript).Methods(http.MethodGet, http.MethodHead)
 	router.HandleFunc("/preview/{id}", handler.previewPortfolio).Methods(http.MethodGet)
 	router.PathPrefix("/api/").Handler(handler.middleware(api))
 	router.Handle("/api", http.NotFoundHandler())
 	router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets))).Methods(http.MethodGet, http.MethodHead)
 	router.Handle("/", http.FileServer(http.FS(assets))).Methods(http.MethodGet, http.MethodHead)
-	return router, nil
+	return handler.hostRouter(router), nil
 }
 
 type statusHandler struct{}

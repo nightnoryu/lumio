@@ -1,4 +1,5 @@
 import {useEffect, useState, type FormEvent} from "react";
+import {Publishing} from "./Publishing";
 import {api, failure} from "./api/client";
 import type {components} from "./api/schema";
 
@@ -38,7 +39,7 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
         try {
             const result = await api.PUT("/api/sites/{id}/draft", {params: {path: {id: siteId}}, headers: {"X-CSRF-Token": csrf}, body: draft});
             if (!result.data) throw failure(result.error);
-            setDraft(result.data); setDirty(false); setNotice("Draft saved. Your portfolio is private.");
+            setDraft(result.data); setDirty(false); setNotice("Draft saved. Publish to make these changes public.");
         } catch (err) {setError(failure(err).message);} finally {setBusy(false);}
     }
     async function refreshPhotos() {
@@ -54,11 +55,12 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
     }
     if (!draft) return <div>{error ? <><p role="alert">{error}</p><button onClick={() => setReload(n => n + 1)}>Retry loading editor</button></> : <p role="status">Loading portfolio editor…</p>}</div>;
     const ready = photos.filter(p => p.status === "ready");
-    const incomplete = [!draft.displayName.trim() && "Add your display name.", !draft.biography.trim() && "Introduce yourself with a biography.", !draft.photos.length && "Select photographs for your portfolio.", !draft.contacts.length && "Add a way for visitors to contact you."].filter(Boolean);
+    const incomplete = [!draft.displayName.trim() && "Add your display name.", !draft.biography.trim() && "Introduce yourself with a biography.", !draft.photos.length && "Select photographs for your portfolio.", !draft.contacts.length && "Add a way for visitors to contact you.", draft.photos.some(p => !p.alt.trim()) && "Add an image description to every photograph."].filter(Boolean);
     const photoSelect = (field: "profilePhoto" | "coverPhoto", label: string) => <label>{label}<select value={draft[field]} onChange={e => change({[field]: e.target.value})}><option value="">None</option>{ready.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>;
     return <div className="portfolio-editor">
         <h3>Build your portfolio</h3>
-        <p>Save your draft, then preview it. Changes stay private.</p>
+        <p>Save your draft, then preview it. Draft edits stay private until you publish.</p>
+        <Publishing siteId={siteId} csrf={csrf} version={draft.version} dirty={dirty} saving={busy}/>
         {error && <p className="error" role="alert">{error}</p>}
         {notice && <p role="status">{notice}</p>}
         <form onSubmit={save}>
@@ -111,6 +113,12 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
                     <button type="button" className="quiet" onClick={() => change({contacts: draft.contacts.filter((_, n) => n !== i)})}>Remove contact</button>
                 </div>)}
                 <button type="button" disabled={draft.contacts.length >= 12} onClick={() => change({contacts: [...draft.contacts, {label: "", url: ""}]})}>Add contact</button>
+            </fieldset>
+            <fieldset disabled={busy}>
+                <legend>Search and sharing</legend>
+                <label>Page title<input maxLength={120} placeholder={`${draft.displayName || "Your name"} — Photography`} value={draft.seoTitle ?? ""} onChange={e => change({seoTitle: e.target.value})}/></label>
+                <label>Page description<textarea maxLength={300} placeholder="A short introduction for search results and shared links" value={draft.seoDescription ?? ""} onChange={e => change({seoDescription: e.target.value})}/></label>
+                <p className="hint">Leave these blank to use your name and biography. Your cover photograph, or first portfolio photograph, appears in link previews.</p>
             </fieldset>
             {!!incomplete.length && <aside><p>Before sharing your portfolio:</p><ul>{incomplete.map(item => <li key={String(item)}>{item}</li>)}</ul><p>You can save an incomplete draft.</p></aside>}
             <div className="editor-actions"><button disabled={busy}>{busy ? "Please wait…" : "Save draft"}</button><span role="status">{dirty ? "Unsaved changes" : "Saved draft"}</span></div>

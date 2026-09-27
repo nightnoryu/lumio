@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"io"
 
 	"lumio/internal/domain"
 )
@@ -10,6 +11,10 @@ import (
 type PortfolioStore interface {
 	Draft(context.Context, string, string) (domain.Draft, error)
 	SaveDraft(context.Context, string, string, domain.Draft) (domain.Draft, error)
+	Publish(context.Context, string, string, int64) (int64, error)
+	Unpublish(context.Context, string, string) error
+	PublicationVersion(context.Context, string, string) (int64, error)
+	Published(context.Context, string) (domain.Revision, error)
 }
 type Portfolio struct {
 	Store PortfolioStore
@@ -52,4 +57,34 @@ func (p *Portfolio) Preview(ctx context.Context, user, site string) (domain.Draf
 		}
 	}
 	return d, urls, nil
+}
+
+func (p *Portfolio) Publish(ctx context.Context, user, site string, version int64) (int64, error) {
+	return p.Store.Publish(ctx, user, site, version)
+}
+func (p *Portfolio) Unpublish(ctx context.Context, user, site string) error {
+	return p.Store.Unpublish(ctx, user, site)
+}
+func (p *Portfolio) PublicationVersion(ctx context.Context, user, site string) (int64, error) {
+	return p.Store.PublicationVersion(ctx, user, site)
+}
+func (p *Portfolio) Published(ctx context.Context, slug string) (domain.Revision, error) {
+	return p.Store.Published(ctx, slug)
+}
+func (p *Portfolio) PublicImage(ctx context.Context, slug, revision, photo string, index int) (body io.ReadCloser, size int64, kind string, err error) {
+	r, err := p.Published(ctx, slug)
+	if err != nil {
+		return nil, 0, "", err
+	}
+	image, ok := r.Images[photo]
+	if r.ID != revision || !ok || index < 0 || index >= len(image.Variants) {
+		return nil, 0, "", domain.ErrNotFound
+	}
+	variant := image.Variants[index]
+	body, size, err = p.Media.Objects.Open(ctx, variant.Key)
+	kind = "image/jpeg"
+	if variant.Format == "webp" {
+		kind = "image/webp"
+	}
+	return body, size, kind, err
 }
