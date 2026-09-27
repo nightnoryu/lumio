@@ -11,6 +11,9 @@
     "generate": "openapi-typescript ../api/publicapi.yml -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "@uppy/aws-s3": "5.1.0",
+    "@uppy/core": "5.2.0",
+    "@uppy/dashboard": "5.1.1",
     "openapi-fetch": "0.17.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"

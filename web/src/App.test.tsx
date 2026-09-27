@@ -1,3 +1,4 @@
+vi.mock("./Photos", () => ({Photos: () => <div>Photographs</div>}));
 // @vitest-environment jsdom
 import {fireEvent, render, screen, waitFor, cleanup} from "@testing-library/react";
 import {afterEach, beforeEach, expect, test, vi} from "vitest";

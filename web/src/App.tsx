@@ -1,6 +1,8 @@
 import {useEffect, useState, type FormEvent} from "react";
 import {api, failure, type Site, type Viewer} from "./api/client";
 
+import {Photos} from "./Photos";
+
 type Mode = "login" | "register" | "reset";
 const resetToken = new URLSearchParams(window.location.hash.slice(1)).get("reset") ?? "";
 if (resetToken) window.history.replaceState(null, "", window.location.pathname);
@@ -94,7 +96,7 @@ export function App() {
                     {sites.length ? <ul className="sites">{sites.map(site => <li key={site.id}>
                         <h2>{site.slug}.{viewer.baseDomain}</h2>
                         <span className="badge">Private draft</span>
-                        <p>Your subdomain is reserved. Photo uploads and portfolio editing are coming next.</p>
+                        <Photos siteId={site.id} csrf={viewer.csrfToken} />
                     </li>)}</ul> : <form onSubmit={submit}>
                         <p className="intro">Choose a home for your photography.</p>
                         <label htmlFor="slug">Your subdomain</label>
