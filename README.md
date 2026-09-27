@@ -1,3 +1,8 @@
+<!-- markdownlint-disable -->
+<p align="center">
+	<img src="https://github.com/user-attachments/assets/46eaa269-f756-4117-91fd-345af400772d" width="180" title="Lumio Logo">
+</p>
+
 <h1 align="center">Lumio</h1>
 <p align="center"><i>Your work, beautifully framed.</i></p>
 
@@ -6,9 +11,18 @@
     <a href="https://github.com/nightnoryu/lumio/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nightnoryu/lumio?cache-control=no-cache"></a>
     <a href="https://github.com/nightnoryu/lumio/actions/workflows/ci.yml"><img src="https://github.com/nightnoryu/lumio/actions/workflows/ci.yml/badge.svg?cache-control=no-cache"></a>
 </p>
+<!-- markdownlint-enable -->
 
 Lumio is a portfolio website builder for photographers. Create a polished
 portfolio, showcase selected work, and share it through a personal website.
+
+## ✨ Features
+
+TODO
+
+## 📸 Screenshots
+
+TODO
 
 ## 📚 Documentation
 
@@ -17,6 +31,10 @@ portfolio, showcase selected work, and share it through a personal website.
 - [Architecture](docs/architecture.md) — code structure and system boundaries
 - [Pilot operations](docs/pilot-operations.md) — invitations, accounts, and password recovery
 - [Changelog](CHANGELOG.md)
+
+## ⚒️ Local development
+
+TODO
 
 ## 📜 License
 
