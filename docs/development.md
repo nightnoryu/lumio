@@ -54,3 +54,39 @@ needed. CI runs E2E separately after the regular build and checks. Coverage
 includes invitation redemption, ownership, CSRF/Origin validation, sessions,
 logout, and password recovery. React tests exercise sign-in, site creation,
 and sign-out.
+
+## Photography uploads
+
+The dashboard accepts JPEG, PNG and WebP, shows upload progress and offers
+cancellation/retry. Optional watermark text is baked into every variant. If a
+transfer succeeded but its completion request failed, use **Check completed
+upload** in the photo list. An expired upload must be removed and selected again.
+Single PUT uploads restart from the beginning; multipart/resume is deferred
+until real portfolio testing shows it is needed.
+
+Upload creation reserves count and original bytes under a site row lock. Removal
+hides a photo immediately, but quota is released only after object cleanup,
+following signed URL/worker lease expiry (normally up to 16 minutes). Failed
+photos retain their quota until removed. Storage also contains generated variants
+and temporarily duplicated staged originals; these are outside the original-byte
+quota. Completion verifies the S3 size/type, copies the object into private durable
+storage, and atomically transitions the photo into the PostgreSQL job queue.
+The worker verifies signatures/dimensions and fully decodes the image before it
+becomes ready. A queued upload survives staging expiry and worker downtime.
+
+Jobs use `FOR UPDATE SKIP LOCKED`, ten-minute leases and a three-minute attempt
+budget. Failed attempts retry up to three times. Crashed jobs are reclaimed;
+lease tokens fence stale commits. Versioned variants are isolated by attempt,
+with obsolete attempts pruned after success. Deletion and abandoned-upload cleanup
+run in the worker; staging lifecycle also catches uploads finishing after cleanup.
+
+```sh
+mise run backend:test:media  # Real libvips processing inside the worker image
+# Local MinIO integration uses the default development credentials:
+docker compose run --rm lumio-storage-init
+LUMIO_TEST_STORAGE=1 mise run backend:test:e2e
+```
+
+Automated image fixtures cover portrait/landscape, EXIF orientation, metadata
+stripping, original preservation and invalid signatures. Real photographer
+colour/sharpness review and interrupted large browser uploads remain pilot checks.

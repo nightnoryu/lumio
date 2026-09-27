@@ -24,7 +24,7 @@ run = "docker compose up -d --wait"
 
 [tasks."dev:reload"]
 depends = [ "backend:build" ]
-run = "docker compose restart lumio"
+run = "docker compose restart lumio lumio-worker"
 
 [tasks."dev:rebuild"]
 depends = [ "backend:build" ]
@@ -139,3 +139,12 @@ run = "pnpm run generate"
 dir = "backend"
 depends = [ "backend:generate" ]
 run = "go test -tags e2e ./test/e2e/..."
+
+[tasks."backend:test:media"]
+dir = "backend"
+depends = [ "backend:build" ]
+run = [
+    "docker build -f Dockerfile.worker -t lumio-worker-test .",
+    "go test -c -o bin/imaging.test ./internal/infrastructure/imaging",
+    "docker run --rm -v $(pwd)/bin/imaging.test:/tests:ro --entrypoint /tests lumio-worker-test -test.v",
+]

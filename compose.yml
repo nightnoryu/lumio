@@ -23,7 +23,11 @@ services:
 
   lumio:
     build: backend
-    environment:
+    environment: &lumio-environment
+      LUMIO_S3_ENDPOINT: http://lumio-storage:9000
+      LUMIO_S3_PUBLIC_ENDPOINT: http://localhost:9000
+      LUMIO_S3_ACCESS_KEY: ${LUMIO_MINIO_USER:-lumio-local}
+      LUMIO_S3_SECRET_KEY: ${LUMIO_MINIO_PASSWORD:-lumio-local-only}
       LUMIO_DASHBOARD_ORIGIN: http://localhost:3000
       LUMIO_BASE_DOMAIN: localhost
       LUMIO_DB_HOST: lumio-db
@@ -40,6 +44,8 @@ services:
       - "traefik.http.routers.lumio-api.rule=Host(`localhost`) && (PathPrefix(`/api`) || Path(`/healthz`) || Path(`/livez`))"
       - "traefik.http.services.lumio-api.loadbalancer.server.port=8080"
     depends_on:
+      lumio-storage-init:
+        condition: service_completed_successfully
       lumio-db:
         condition: service_healthy
     healthcheck:
@@ -47,6 +53,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  lumio-worker:
+    build:
+      context: backend
+      dockerfile: Dockerfile.worker
+    environment: *lumio-environment
+    volumes:
+      - "./backend/bin/lumio:/app/bin/lumio:ro"
+    mem_limit: 1g
+    cpus: 2
+    restart: unless-stopped
+    depends_on:
+      lumio:
+        condition: service_healthy
+      lumio-storage-init:
+        condition: service_completed_successfully
+
+  lumio-storage-init:
+    build: backend
+    command: ["storage-init"]
+    environment: *lumio-environment
+    volumes:
+      - "./backend/bin/lumio:/app/bin/lumio:ro"
+    depends_on:
+      lumio-db:
+        condition: service_healthy
+      lumio-storage:
+        condition: service_healthy
 
   lumio-db:
     image: postgres:16-alpine
@@ -69,6 +103,7 @@ services:
     user: "0:0"
     command: server /data --console-address :9001
     environment:
+      MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:3000
       MINIO_ROOT_USER: ${LUMIO_MINIO_USER:-lumio-local}
       MINIO_ROOT_PASSWORD: ${LUMIO_MINIO_PASSWORD:-lumio-local-only}
     ports:

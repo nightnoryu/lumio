@@ -33,3 +33,6 @@ jobs:
 
       - name: Run E2E tests
         run: mise run backend:test:e2e
+
+      - name: Verify libvips processing
+        run: mise run backend:test:media
