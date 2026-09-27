@@ -16,7 +16,7 @@ import (
 func (h *apiHandler) hostRouter(dashboard http.Handler) http.Handler {
 	origin, _ := url.Parse(h.config.Origin)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/healthz" || r.URL.Path == "/livez" {
+		if r.URL.Path == healthPath || r.URL.Path == livePath {
 			dashboard.ServeHTTP(w, r)
 			return
 		}
@@ -54,7 +54,7 @@ func (h *apiHandler) publicPortfolio(w http.ResponseWriter, r *http.Request, slu
 		h.publicImage(w, r, slug)
 		return
 	}
-	if r.URL.Path != "/" && r.URL.Path != "/portfolio.js" {
+	if r.URL.Path != "/" && r.URL.Path != viewerPath {
 		http.NotFound(w, r)
 		return
 	}
@@ -63,14 +63,21 @@ func (h *apiHandler) publicPortfolio(w http.ResponseWriter, r *http.Request, slu
 		h.publicError(w, r, err)
 		return
 	}
-	if r.URL.Path == "/portfolio.js" {
+	if r.URL.Path == viewerPath {
 		viewerScript(w, r)
 		return
 	}
 	images := make(map[string]string, len(revision.Images))
+	sources := make(map[string]string, len(revision.Images))
 	for id, image := range revision.Images {
 		width := 0
 		for index, variant := range image.Variants {
+			if variant.Format == "jpg" {
+				if sources[id] != "" {
+					sources[id] += ", "
+				}
+				sources[id] += "/images/" + revision.ID + "/" + id + "/" + strconv.Itoa(index) + " " + strconv.Itoa(variant.Width) + "w"
+			}
 			if variant.Format == "jpg" && variant.Width > width {
 				images[id] = "/images/" + revision.ID + "/" + id + "/" + strconv.Itoa(index)
 				width = variant.Width
@@ -78,7 +85,7 @@ func (h *apiHandler) publicPortfolio(w http.ResponseWriter, r *http.Request, slu
 		}
 	}
 	var body bytes.Buffer
-	err = portfolio.Page(revision.Draft, images, portfolio.Metadata{Canonical: h.publicationURL(slug)}).Render(r.Context(), &body)
+	err = portfolio.Page(revision.Draft, images, portfolio.Metadata{Canonical: h.publicationURL(slug), Sources: sources}).Render(r.Context(), &body)
 	if err != nil {
 		h.publicError(w, r, err)
 		return
@@ -113,6 +120,14 @@ func (h *apiHandler) publicImage(w http.ResponseWriter, r *http.Request, slug st
 		return
 	}
 	defer body.Close()
+	// Revalidate every reuse so unpublishing revokes access, including cached images.
+	w.Header().Set("Cache-Control", "private, no-cache")
+	tag := `"` + parts[0] + "/" + parts[1] + "/" + strconv.Itoa(index) + `"`
+	w.Header().Set("ETag", tag)
+	if matchesETag(r.Header.Get("If-None-Match"), tag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
 	w.Header().Set("Content-Type", kind)
 	w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 	if r.Method == http.MethodHead {
@@ -121,4 +136,14 @@ func (h *apiHandler) publicImage(w http.ResponseWriter, r *http.Request, slug st
 	if _, err = io.Copy(w, body); err != nil {
 		h.logger.Error(err, "stream portfolio image")
 	}
+}
+
+func matchesETag(value, tag string) bool {
+	for _, candidate := range strings.Split(value, ",") {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "*" || strings.TrimPrefix(candidate, "W/") == tag {
+			return true
+		}
+	}
+	return false
 }

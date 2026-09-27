@@ -36,15 +36,16 @@ func NewRouter(assets fs.FS, ping health.Check, logger log.Logger, configs ...AP
 		return nil, err
 	}
 	router := mux.NewRouter()
-	router.Handle("/livez", live).Methods(http.MethodGet)
-	router.Handle("/healthz", ready).Methods(http.MethodGet)
-	router.HandleFunc("/portfolio.js", viewerScript).Methods(http.MethodGet, http.MethodHead)
+	router.Handle(livePath, live).Methods(http.MethodGet)
+	router.Handle(healthPath, ready).Methods(http.MethodGet)
+	router.HandleFunc(viewerPath, viewerScript).Methods(http.MethodGet, http.MethodHead)
 	router.HandleFunc("/preview/{id}", handler.previewPortfolio).Methods(http.MethodGet)
 	router.PathPrefix("/api/").Handler(handler.middleware(api))
 	router.Handle("/api", http.NotFoundHandler())
-	router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets))).Methods(http.MethodGet, http.MethodHead)
-	router.Handle("/", http.FileServer(http.FS(assets))).Methods(http.MethodGet, http.MethodHead)
-	return handler.hostRouter(router), nil
+	router.PathPrefix("/assets/").Handler(staticAssets(assets)).Methods(http.MethodGet, http.MethodHead)
+	router.Handle(recoveryPath, staticAssets(assets)).Methods(http.MethodGet, http.MethodHead)
+	router.Handle("/", staticAssets(assets)).Methods(http.MethodGet, http.MethodHead)
+	return handler.observe(handler.security(handler.hostRouter(router)), api), nil
 }
 
 type statusHandler struct{}

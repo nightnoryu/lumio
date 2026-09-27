@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -46,6 +47,33 @@ func TestConfigFromEnvironment(t *testing.T) {
 			tc.change(&invalid)
 			if invalid.validate() == nil {
 				t.Fatal("invalid configuration accepted")
+			}
+		})
+	}
+	for _, tc := range []struct {
+		name, value, want string
+		unset             bool
+	}{
+		{name: "metrics default", want: "127.0.0.1:9090", unset: true},
+		{name: "metrics disabled", value: "", want: ""},
+		{name: "metrics explicit address", value: "127.0.0.1:9091", want: "127.0.0.1:9091"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("LUMIO_METRICS_ADDRESS", tc.value)
+			if tc.unset {
+				if err := os.Unsetenv("LUMIO_METRICS_ADDRESS"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			parsed, err := loadConfig()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if parsed.MetricsAddress != tc.want {
+				t.Fatalf("metrics address = %q, want %q", parsed.MetricsAddress, tc.want)
+			}
+			if err := parsed.validate(); err != nil {
+				t.Fatal(err)
 			}
 		})
 	}

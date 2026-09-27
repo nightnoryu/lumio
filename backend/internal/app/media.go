@@ -37,9 +37,12 @@ type Media struct {
 	Store   MediaStore
 	Objects ObjectStore
 	Limits  domain.MediaLimits
+	Observe func(operation, outcome string, duration time.Duration)
 }
 
-func (m *Media) Create(ctx context.Context, user, site, name, kind, watermark string, size int64) (domain.Photo, string, error) {
+func (m *Media) Create(ctx context.Context, user, site, name, kind, watermark string, size int64) (photo domain.Photo, uploadURL string, resultErr error) {
+	start := time.Now()
+	defer func() { m.observe("upload_create", start, resultErr) }()
 	if err := domain.ValidatePhoto(name, kind, watermark, size, m.Limits); err != nil {
 		return domain.Photo{}, "", err
 	}
@@ -51,7 +54,9 @@ func (m *Media) Create(ctx context.Context, user, site, name, kind, watermark st
 	url, err := m.Objects.UploadURL(ctx, "uploads/"+p.ID+"/original", kind, size)
 	return p, url, err
 }
-func (m *Media) Complete(ctx context.Context, user, site, id string) error {
+func (m *Media) Complete(ctx context.Context, user, site, id string) (resultErr error) {
+	start := time.Now()
+	defer func() { m.observe("upload_complete", start, resultErr) }()
 	p, err := m.Store.Photo(ctx, user, site, id)
 	if err != nil {
 		return err
@@ -71,4 +76,15 @@ func (m *Media) Complete(ctx context.Context, user, site, id string) error {
 		return err
 	}
 	return m.Store.QueuePhoto(ctx, user, site, id)
+}
+
+func (m *Media) observe(operation string, start time.Time, err error) {
+	if m.Observe == nil {
+		return
+	}
+	outcome := "success"
+	if err != nil {
+		outcome = "error"
+	}
+	m.Observe(operation, outcome, time.Since(start))
 }

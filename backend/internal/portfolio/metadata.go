@@ -7,7 +7,12 @@ import (
 	"lumio/internal/domain"
 )
 
-type Metadata struct{ Canonical, Title, Description, Image, ImageAlt string }
+const editorialTemplate = "editorial"
+
+type Metadata struct {
+	Canonical, Title, Description, Image, ImageAlt string
+	Sources                                        map[string]string
+}
 
 func pageMetadata(d domain.Draft, images map[string]string, options []Metadata) Metadata {
 	meta := Metadata{}
@@ -41,4 +46,20 @@ func pageMetadata(d domain.Draft, images map[string]string, options []Metadata) 
 		}
 	}
 	return meta
+}
+
+func gallerySizes(d domain.Draft, index int) string {
+	if d.Layout == "column" {
+		return "(max-width: 640px) 88vw, (max-width: 1000px) 90vw, 900px"
+	}
+	if d.Template == editorialTemplate && index%3 == 0 {
+		return "(max-width: 640px) 88vw, (max-width: 1280px) 90vw, 1152px"
+	}
+	return "(max-width: 640px) 88vw, (max-width: 1280px) calc(45vw - 16px), 560px"
+}
+func imageLoading(d domain.Draft, index int) string {
+	if d.CoverPhoto == "" && index == 0 {
+		return "eager"
+	}
+	return "lazy"
 }

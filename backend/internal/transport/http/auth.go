@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,16 +16,20 @@ import (
 	"lumio/api/server/publicapi"
 	"lumio/internal/app"
 	"lumio/internal/domain"
+	"lumio/internal/infrastructure/observability"
 )
 
 const cookieName = "__Host-lumio-session"
 
 type APIConfig struct {
-	Service    *app.Service
-	Media      *app.Media
-	Portfolio  *app.Portfolio
-	Origin     string
-	BaseDomain string
+	Service        *app.Service
+	Media          *app.Media
+	Portfolio      *app.Portfolio
+	Origin         string
+	BaseDomain     string
+	Metrics        *observability.Metrics
+	StorageOrigin  string
+	TrustedProxies []*net.IPNet
 }
 type requestKey struct{}
 type requestState struct {
@@ -141,6 +146,7 @@ func (h *apiHandler) middleware(next *publicapi.Server) http.Handler {
 	origin, _ := url.Parse(h.config.Origin)
 	// Bound expensive Argon2 work and request bodies before API decoding.
 	hashing := make(chan struct{}, 2)
+	limits := &rateLimits{entries: make(map[string]rateEntry)}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		_, known := next.FindPath(r.Method, r.URL)
@@ -166,14 +172,17 @@ func (h *apiHandler) middleware(next *publicapi.Server) http.Handler {
 			return
 		}
 		state := requestState{writer: w}
-		public := r.URL.Path == "/api/auth/login" || r.URL.Path == "/api/auth/register" || r.URL.Path == "/api/auth/reset-password"
+		public := publicAuth(r.URL.Path)
+		if public && !limits.check(w, "auth:"+clientIP(r, h.config.TrustedProxies), 10) {
+			return
+		}
 		if !public {
 			var ok bool
-			state, ok = h.authorize(w, r, write)
+			state, ok = h.authorizeLimited(w, r, write, limits)
 			if !ok {
 				return
 			}
-		} else if write {
+		} else {
 			select {
 			case hashing <- struct{}{}:
 				defer func() { <-hashing }()
@@ -219,4 +228,25 @@ func requestBodyLimit(path string) int64 {
 		return 512 * 1024
 	}
 	return 4096
+}
+
+func (h *apiHandler) authorizeLimited(w http.ResponseWriter, r *http.Request, write bool, limits *rateLimits) (requestState, bool) {
+	if !limits.check(w, "api:"+clientIP(r, h.config.TrustedProxies), 600) {
+		return requestState{}, false
+	}
+	state, ok := h.authorize(w, r, write)
+	if !ok || !write {
+		return state, ok
+	}
+	if !limits.check(w, "write:"+state.user.ID, 120) {
+		return state, false
+	}
+	if strings.Contains(r.URL.Path, "/photos") && !limits.check(w, "upload:"+state.user.ID, 60) {
+		return state, false
+	}
+	return state, true
+}
+
+func publicAuth(path string) bool {
+	return path == "/api/auth/login" || path == "/api/auth/register" || path == "/api/auth/reset-password"
 }

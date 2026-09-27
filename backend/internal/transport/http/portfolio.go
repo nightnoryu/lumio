@@ -56,7 +56,7 @@ func (h *apiHandler) previewPortfolio(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 	w.Header().Set("Referrer-Policy", "no-referrer")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src https: http:; style-src 'unsafe-inline'; script-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' "+h.config.StorageOrigin+"; style-src 'unsafe-inline'; script-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
 	origin, err := url.Parse(h.config.Origin)
 	if err != nil || r.Host != origin.Host {
 		writeError(w, 403, "Invalid dashboard host")

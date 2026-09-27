@@ -30,14 +30,14 @@ templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
  <body class={ d.Colour + " " + d.Typography + " " + d.Template }>
  <a class="skip" href="#photographs">Skip to photographs</a>
  <main>
-  if d.Template == "editorial" {
-   @Cover(d.CoverPhoto, images)
-   @Profile(d, images)
+  if d.Template == editorialTemplate {
+   @Cover(d.CoverPhoto, images, meta.Sources)
+   @Profile(d, images, meta.Sources)
   } else {
-   @Profile(d, images)
-   @Cover(d.CoverPhoto, images)
+   @Profile(d, images, meta.Sources)
+   @Cover(d.CoverPhoto, images, meta.Sources)
   }
-  @Gallery(d, images)
+  @Gallery(d, images, meta.Sources)
   @Services(d)
   <footer aria-label="Contact">
    for _, c := range d.Contacts {
@@ -53,10 +53,10 @@ templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
  </body>
  </html>
 }
-templ Profile(d domain.Draft, images map[string]string) {
+templ Profile(d domain.Draft, images map[string]string, sources map[string]string) {
  <header class="intro">
   if d.ProfilePhoto != "" {
-   <img class="profile" src={ images[d.ProfilePhoto] } alt={ d.DisplayName }/>
+   <img class="profile" src={ images[d.ProfilePhoto] } srcset={ sources[d.ProfilePhoto] } sizes="140px" alt={ d.DisplayName }/>
   }
   <p>{ d.Specialization }</p>
   <h1>{ d.DisplayName }</h1>
@@ -64,17 +64,17 @@ templ Profile(d domain.Draft, images map[string]string) {
   <p>{ d.Biography }</p>
  </header>
 }
-templ Cover(id string, images map[string]string) {
+templ Cover(id string, images map[string]string, sources map[string]string) {
  if id != "" {
-  <img class="cover" src={ images[id] } alt="" fetchpriority="high"/>
+  <img class="cover" src={ images[id] } srcset={ sources[id] } sizes="(max-width: 640px) 88vw, (max-width: 1280px) 90vw, 1152px" alt="" fetchpriority="high"/>
  }
 }
-templ Gallery(d domain.Draft, images map[string]string) {
+templ Gallery(d domain.Draft, images map[string]string, sources map[string]string) {
  <section id="photographs" class={ "gallery " + d.Layout } aria-label="Portfolio photographs">
-  for _, p := range d.Photos {
+  for index, p := range d.Photos {
    <figure>
     <a href={ templ.SafeURL(images[p.ID]) } data-photo aria-label={ "View photograph: " + p.Alt }>
-     <img src={ images[p.ID] } alt={ p.Alt } loading="lazy"/>
+     <img src={ images[p.ID] } srcset={ sources[p.ID] } sizes={ gallerySizes(d, index) } alt={ p.Alt } loading={ imageLoading(d, index) } decoding="async"/>
     </a>
     if p.Category != "" {
      <figcaption>{ p.Category }</figcaption>

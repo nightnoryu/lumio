@@ -29,13 +29,16 @@ func (publicObjects) Open(_ context.Context, key string) (io.ReadCloser, int64, 
 	}
 	return io.NopCloser(strings.NewReader("optimized photograph")), 20, nil
 }
-func (f *identityFixture) public(host, path string, status int) *testResponse {
+func (f *identityFixture) public(host, path string, status int, tags ...string) *testResponse {
 	f.t.Helper()
 	req, err := http.NewRequestWithContext(f.t.Context(), "GET", f.server.URL+path, http.NoBody)
 	if err != nil {
 		f.t.Fatal(err)
 	}
 	req.Host = host
+	if len(tags) > 0 {
+		req.Header.Set("If-None-Match", tags[0])
+	}
 	response, err := f.server.Client().Do(req)
 	if err != nil {
 		f.t.Fatal(err)
@@ -129,6 +132,12 @@ func TestPublicationJourney(t *testing.T) {
 	if image := f.public("anna.lumio.test", imagePath, 200); string(image.body) != "optimized photograph" || image.header.Get("Content-Type") != "image/jpeg" {
 		t.Fatal("image delivery failed")
 	}
+	image := f.public("anna.lumio.test", imagePath, 200)
+	if image.header.Get("Cache-Control") != "private, no-cache" || image.header.Get("ETag") == "" {
+		t.Fatal("image cache policy missing")
+	}
+	tag := image.header.Get("ETag")
+	f.public("anna.lumio.test", imagePath, 304, tag)
 	for _, bad := range []string{strings.Replace(imagePath, photo, unused, 1), strings.Replace(imagePath, photo, foreign, 1), imagePath + "/original", strings.TrimSuffix(imagePath, "0") + "99", "/media/" + photo + "/original", "/api/sites", "/preview/" + site.ID} {
 		f.public("anna.lumio.test", bad, 404)
 	}
@@ -147,14 +156,14 @@ func TestPublicationJourney(t *testing.T) {
 	f.call("DELETE", path+"/publication", "", token, testOrigin, "", 403)
 	f.call("DELETE", path+"/publication", "", token, testOrigin, app.CSRF(token), 204)
 	f.public("anna.lumio.test", "/", 404)
-	f.public("anna.lumio.test", imagePath, 404)
+	f.public("anna.lumio.test", imagePath, 404, tag)
 	f.call("DELETE", path+"/photos/"+photo, "", token, testOrigin, app.CSRF(token), 204)
 	publish(draft.Version, 200)
 	after := f.public("anna.lumio.test", "/", 200)
 	if !strings.Contains(string(after.body), "Unpublished new name") {
 		t.Fatal("new revision not activated")
 	}
-	f.public("anna.lumio.test", imagePath, 404)
+	f.public("anna.lumio.test", imagePath, 404, tag)
 	store := &postgres.Store{DB: f.db.TransactionalClient()}
 	if _, err = store.CleanupPhoto(t.Context()); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("unexpected cleanup: %v", err)
@@ -162,7 +171,7 @@ func TestPublicationJourney(t *testing.T) {
 }
 func checkPublicHTML(t *testing.T, response *testResponse) {
 	t.Helper()
-	for _, text := range []string{"Anna Photographer", "Portraits in natural light", "<title>Anna — Portraits</title>", `name="description" content="Beautiful portraits in Berlin"`, `rel="canonical" href="https://anna.lumio.test/"`, `property="og:url" content="https://anna.lumio.test/"`, `property="og:image" content="https://anna.lumio.test/images/`, `alt="Portrait in sunlight"`, `<dialog`} {
+	for _, text := range []string{"Anna Photographer", "Portraits in natural light", "<title>Anna — Portraits</title>", `name="description" content="Beautiful portraits in Berlin"`, `rel="canonical" href="https://anna.lumio.test/"`, `property="og:url" content="https://anna.lumio.test/"`, `property="og:image" content="https://anna.lumio.test/images/`, `alt="Portrait in sunlight"`, `<dialog`, `srcset="/images/`, `960w"`, `sizes="`, `loading="eager"`} {
 		if !strings.Contains(string(response.body), text) {
 			t.Errorf("missing %s", text)
 		}

@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/nightnoryu/go-kita/env"
 	"github.com/nightnoryu/go-kita/jsonlog"
 )
 
@@ -21,7 +20,7 @@ func main() {
 }
 
 func run() error {
-	cfg, err := env.ParseEnv[config](appID)
+	cfg, err := loadConfig()
 	if err != nil {
 		return err
 	}

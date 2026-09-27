@@ -16,6 +16,7 @@ import (
 	"lumio/internal/app"
 	"lumio/internal/domain"
 	"lumio/internal/infrastructure/imaging"
+	"lumio/internal/infrastructure/observability"
 	"lumio/internal/infrastructure/password"
 	"lumio/internal/infrastructure/postgres"
 	"lumio/internal/infrastructure/storage"
@@ -59,7 +60,18 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 	if err = objects.VerifyLifecycle(ctx); err != nil {
 		return err
 	}
-	media := &app.Media{Store: &postgres.Store{DB: db.TransactionalClient()}, Objects: objects, Limits: domain.MediaLimits{FileBytes: cfg.MediaFileBytes, StorageBytes: cfg.MediaStorageBytes, Photos: cfg.MediaPhotos}}
+	metrics := observability.New()
+	if cfg.MetricsAddress != "" {
+		closeMetrics, metricsErr := startMetrics(ctx, cfg.MetricsAddress, metrics, logger)
+		if metricsErr != nil {
+			return fmt.Errorf("start metrics: %w", metricsErr)
+		}
+		defer closeMetrics()
+	}
+	media := &app.Media{Observe: func(operation, outcome string, duration time.Duration) {
+		metrics.Media(operation, outcome, duration)
+		logger.WithFields(log.Fields{"operation": operation, "outcome": outcome, "duration_ms": duration.Milliseconds()}).Info("media operation")
+	}, Store: &postgres.Store{DB: db.TransactionalClient()}, Objects: objects, Limits: domain.MediaLimits{FileBytes: cfg.MediaFileBytes, StorageBytes: cfg.MediaStorageBytes, Photos: cfg.MediaPhotos}}
 	if len(os.Args) > 1 && os.Args[1] == "worker" {
 		if _, err = exec.LookPath("vips"); err != nil {
 			return fmt.Errorf("worker requires libvips: %w", err)
@@ -70,7 +82,7 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 	if err != nil {
 		return err
 	}
-	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Media: media, Portfolio: &app.Portfolio{Store: &postgres.Store{DB: db.TransactionalClient()}, Media: media}, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain})
+	router, err := httptransport.NewRouter(assets, db.Ping, logger, httptransport.APIConfig{Service: identity, Media: media, Portfolio: &app.Portfolio{Store: &postgres.Store{DB: db.TransactionalClient()}, Media: media}, Origin: cfg.DashboardOrigin, BaseDomain: cfg.BaseDomain, StorageOrigin: cfg.S3PublicEndpoint, TrustedProxies: cfg.trustedProxies(), Metrics: metrics})
 	if err != nil {
 		return err
 	}

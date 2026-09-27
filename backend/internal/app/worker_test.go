@@ -22,9 +22,18 @@ func (p forbiddenProcessor) Process(context.Context, domain.Photo, ObjectStore) 
 	return 0, 0, "", nil
 }
 func TestExpiredClaimCannotTouchObjects(t *testing.T) {
-	media := &Media{Store: expiredClaim{}}
+	observed := false
+	media := &Media{Store: expiredClaim{}, Observe: func(operation, outcome string, duration time.Duration) {
+		observed = true
+		if operation != "process" || outcome != "error" || duration < 0 {
+			t.Fatalf("incorrect operation: %s %s", operation, outcome)
+		}
+	}}
 	// Nil object store deliberately catches any S3 access by the suspended attempt.
 	if err := media.processNext(t.Context(), forbiddenProcessor{t}); !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("expected expired attempt, got %v", err)
+	}
+	if !observed {
+		t.Fatal("failed job was not observed")
 	}
 }

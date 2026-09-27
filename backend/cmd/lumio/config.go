@@ -4,11 +4,13 @@ import (
 	"errors"
 	"net"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/nightnoryu/go-kita/env"
 	"github.com/nightnoryu/go-kita/jsonlog"
 	"github.com/nightnoryu/go-kita/postgresql"
 )
@@ -16,15 +18,17 @@ import (
 const localhost = "localhost"
 
 type config struct {
-	S3Endpoint        string `env:"S3_ENDPOINT" envDefault:"http://localhost:9000"`
-	S3PublicEndpoint  string `env:"S3_PUBLIC_ENDPOINT" envDefault:"http://localhost:9000"`
-	S3Region          string `env:"S3_REGION" envDefault:"us-east-1"`
-	S3Bucket          string `env:"S3_BUCKET" envDefault:"lumio"`
-	S3AccessKey       string `env:"S3_ACCESS_KEY" envDefault:"lumio-local"`
-	S3SecretKey       string `env:"S3_SECRET_KEY" envDefault:"lumio-local-only"`
-	MediaFileBytes    int64  `env:"MEDIA_FILE_BYTES" envDefault:"52428800"`
-	MediaStorageBytes int64  `env:"MEDIA_STORAGE_BYTES" envDefault:"2147483648"`
-	MediaPhotos       int    `env:"MEDIA_PHOTOS" envDefault:"100"`
+	MetricsAddress    string   `env:"METRICS_ADDRESS"`
+	TrustedProxyCIDRs []string `env:"TRUSTED_PROXY_CIDRS" envSeparator:","`
+	S3Endpoint        string   `env:"S3_ENDPOINT" envDefault:"http://localhost:9000"`
+	S3PublicEndpoint  string   `env:"S3_PUBLIC_ENDPOINT" envDefault:"http://localhost:9000"`
+	S3Region          string   `env:"S3_REGION" envDefault:"us-east-1"`
+	S3Bucket          string   `env:"S3_BUCKET" envDefault:"lumio"`
+	S3AccessKey       string   `env:"S3_ACCESS_KEY" envDefault:"lumio-local"`
+	S3SecretKey       string   `env:"S3_SECRET_KEY" envDefault:"lumio-local-only"`
+	MediaFileBytes    int64    `env:"MEDIA_FILE_BYTES" envDefault:"52428800"`
+	MediaStorageBytes int64    `env:"MEDIA_STORAGE_BYTES" envDefault:"2147483648"`
+	MediaPhotos       int      `env:"MEDIA_PHOTOS" envDefault:"100"`
 
 	DashboardOrigin  string        `env:"DASHBOARD_ORIGIN" envDefault:"http://localhost:3000"`
 	BaseDomain       string        `env:"BASE_DOMAIN" envDefault:"localhost"`
@@ -39,8 +43,20 @@ type config struct {
 	DBConnLifetime   time.Duration `env:"DB_CONN_LIFETIME" envDefault:"60s"`
 }
 
+func loadConfig() (*config, error) {
+	cfg, err := env.ParseEnv[config](appID)
+	if err != nil {
+		return nil, err
+	}
+	// envDefault also replaces explicitly empty values, which disable metrics.
+	if _, present := os.LookupEnv("LUMIO_METRICS_ADDRESS"); !present {
+		cfg.MetricsAddress = "127.0.0.1:9090"
+	}
+	return cfg, nil
+}
+
 func (c *config) validate() error {
-	if err := c.validateMedia(); err != nil {
+	if err := c.validateServices(); err != nil {
 		return err
 	}
 	origin, originErr := url.Parse(c.DashboardOrigin)
@@ -103,4 +119,31 @@ func (c *config) validateMedia() error {
 	}
 
 	return nil
+}
+
+func (c *config) trustedProxies() []*net.IPNet {
+	ranges := make([]*net.IPNet, 0, len(c.TrustedProxyCIDRs))
+	for _, value := range c.TrustedProxyCIDRs {
+		_, network, err := net.ParseCIDR(value)
+		if err == nil {
+			ranges = append(ranges, network)
+		}
+	}
+	return ranges
+}
+
+func (c *config) validateServices() error {
+	if c.MetricsAddress != "" {
+		_, port, err := net.SplitHostPort(c.MetricsAddress)
+		number, parseErr := strconv.Atoi(port)
+		if err != nil || parseErr != nil || number < 1 || number > 65535 {
+			return errors.New("LUMIO_METRICS_ADDRESS must be a host:port address")
+		}
+	}
+	for _, value := range c.TrustedProxyCIDRs {
+		if _, _, err := net.ParseCIDR(value); err != nil {
+			return errors.New("invalid LUMIO_TRUSTED_PROXY_CIDRS")
+		}
+	}
+	return c.validateMedia()
 }

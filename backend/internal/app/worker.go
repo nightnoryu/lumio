@@ -29,11 +29,19 @@ func (m *Media) Work(ctx context.Context, processor Processor, report func(error
 	}
 	return ctx.Err()
 }
-func (m *Media) processNext(ctx context.Context, processor Processor) error {
+func (m *Media) processNext(ctx context.Context, processor Processor) (resultErr error) {
 	p, err := m.Store.ClaimPhoto(ctx)
 	if err != nil {
 		return err
 	}
+	start := time.Now()
+	defer func() {
+		if p.Attempts > 3 && resultErr == nil && m.Observe != nil {
+			m.Observe("process", "exhausted", time.Since(start))
+			return
+		}
+		m.observe("process", start, resultErr)
+	}()
 	if p.Attempts > 3 {
 		return m.Store.FailPhoto(ctx, p)
 	}
@@ -54,11 +62,13 @@ func (m *Media) processNext(ctx context.Context, processor Processor) error {
 	}
 	return m.Objects.PruneVariants(job, p.ID, p.Lease)
 }
-func (m *Media) cleanupNext(ctx context.Context) error {
+func (m *Media) cleanupNext(ctx context.Context) (resultErr error) {
 	p, err := m.Store.CleanupPhoto(ctx)
 	if err != nil {
 		return err
 	}
+	start := time.Now()
+	defer func() { m.observe("cleanup", start, resultErr) }()
 	job, cancel := context.WithDeadline(ctx, p.AvailableAt.Add(-9*time.Minute))
 	defer cancel()
 	if err = m.Objects.DeletePrefix(job, "media/"+p.ID+"/"); err != nil {
