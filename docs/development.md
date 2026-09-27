@@ -10,7 +10,7 @@ mise run dev
 ```
 
 Open **http://localhost:3000**. Traefik routes `/api/*`, `/healthz`, and
-`/livez` to Go; Vite serves the dashboard and hot reloads frontend edits over
+`/livez` and `/preview/*` to Go; Vite serves the dashboard and hot reloads frontend edits over
 the same origin. Go changes need `mise run dev:reload`. Ports 3000, 5432,
 9000, and 9001 must be free.
 
@@ -90,3 +90,26 @@ LUMIO_TEST_STORAGE=1 mise run backend:test:e2e
 Automated image fixtures cover portrait/landscape, EXIF orientation, metadata
 stripping, original preservation and invalid signatures. Real photographer
 colour/sharpness review and interrupted large browser uploads remain pilot checks.
+
+## Portfolio editor
+
+Edit profile details, select and order processed photographs, add categories,
+services/prices and contact links, then choose Gallery or Editorial and appearance
+options. **Save draft** persists incomplete portfolios; **Preview saved portfolio**
+opens the authenticated, server-rendered page. Save before previewing new edits.
+Use **Refresh uploaded photographs** after processing completes.
+
+Concurrent saves return a conflict instead of overwriting another window's edits.
+Reloading a saved draft asks before discarding local changes. Remove profile,
+cover and gallery references and save before deleting an uploaded photograph.
+Referenced revision photos are also retained. Publishing remains Phase 5.
+
+Templates live in `backend/internal/portfolio/page.templ`. Run
+`mise run backend:templates` after editing them; the backend build also generates
+them. The pinned templ runtime and generator use the same version. Generated
+`page_templ.go` is committed so ordinary Go checks can compile the renderer.
+
+Editor tests cover form entry and save failures; PostgreSQL tests cover ownership,
+CSRF, stale saves, revision isolation, media retention and private preview access.
+Template tests check appearance selection, escaping and hidden prices. Manual
+mobile/desktop visual review with representative photographs remains a pilot check.
