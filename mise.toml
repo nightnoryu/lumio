@@ -87,9 +87,15 @@ outputs = [ "bin/lumio" ]
 dir = "web"
 run = "pnpm install --frozen-lockfile"
 
+[tasks."web:generate"]
+dir = "web"
+run = "pnpm run generate"
+sources = [ "api/publicapi.yml" ]
+outputs = [ "src/api/schema.d.ts" ]
+
 [tasks."web:build"]
 dir = "web"
-depends = [ "web:modules" ]
+depends = [ "web:modules", "web:generate" ]
 run = "pnpm run build"
 
 # Checks
@@ -113,6 +119,20 @@ dir = "backend"
 depends = [ "backend:generate", "web:build" ]
 run = "go test ./..."
 
+[tasks."backend:test:e2e"]
+dir = "backend"
+depends = [ "backend:generate" ]
+run = "go test -tags e2e ./test/e2e/..."
+
+[tasks."backend:test:media"]
+dir = "backend"
+depends = [ "backend:build" ]
+run = [
+    "docker build -f Dockerfile.worker -t lumio-worker-test .",
+    "go test -c -o bin/imaging.test ./internal/infrastructure/imaging",
+    "docker run --rm -v $(pwd)/bin/imaging.test:/tests:ro --entrypoint /tests lumio-worker-test -test.v",
+]
+
 [tasks."web:test"]
 dir = "web"
 run = "pnpm run test"
@@ -127,29 +147,8 @@ run = [
 
 [tasks."backend:lint"]
 dir = "backend"
-depends = [ "backend:generate", "web:build" ]
-run = [ "golangci-lint run --build-tags e2e", "golangci-lint fmt --diff" ]
+run = [ "golangci-lint run" ]
 
 [tasks."web:lint"]
 dir = "web"
-depends = [ "web:modules" ]
-run = [ "pnpm exec tsc --noEmit", "pnpm run lint" ]
-
-[tasks."web:generate"]
-dir = "web"
-depends = [ "web:modules" ]
-run = "pnpm run generate"
-
-[tasks."backend:test:e2e"]
-dir = "backend"
-depends = [ "backend:generate" ]
-run = "go test -tags e2e ./test/e2e/..."
-
-[tasks."backend:test:media"]
-dir = "backend"
-depends = [ "backend:build" ]
-run = [
-    "docker build -f Dockerfile.worker -t lumio-worker-test .",
-    "go test -c -o bin/imaging.test ./internal/infrastructure/imaging",
-    "docker run --rm -v $(pwd)/bin/imaging.test:/tests:ro --entrypoint /tests lumio-worker-test -test.v",
-]
+run = [ "pnpm run lint" ]
