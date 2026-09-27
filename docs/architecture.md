@@ -39,14 +39,31 @@ The draft is a validated JSONB document with an optimistic version. Saving locks
 its owning site, checks the version and verifies every referenced photograph is
 ready and belongs to that site. Media remain normalized in `photo`; drafts only
 contain IDs and presentation text. Photo deletion takes the same site lock and
-rejects references from saved drafts or revisions.
+rejects references from saved drafts or the active published revision.
 
 Revision documents are separate snapshots; a database trigger rejects updates.
-Phase 5 will create and activate these snapshots through publishing use cases.
-Draft writes never update revisions. The current editor only saves private drafts.
+Publishing validates the saved draft version and its content, snapshots the exact
+processed image keys/dimensions, and switches the site’s active revision in one
+transaction under the site row lock. Repeating a publish of the same active draft
+version is idempotent. Draft writes never update revisions. Unpublishing clears
+the active pointer; historical documents remain immutable, but only active
+revision references retain media.
 
 The preview calls the portfolio application service directly and renders reusable
 `templ` components. It requires the dashboard host and an authenticated owner,
 uses short-lived signed optimized-image URLs, and sends no-store/noindex headers.
 The renderer receives content and resolved image URLs independently of HTTP and
-storage, allowing the public delivery path to reuse it in Phase 5.
+storage. Public pages use the same components, with canonical and Open Graph
+metadata from the published snapshot.
+
+Public routing accepts exactly one valid, nonreserved slug beneath the configured
+base domain and the configured dashboard origin's port. Canonical URLs use the
+configured scheme/domain/port, never forwarded headers or arbitrary host input.
+Only the dashboard host serves private API and preview routes.
+
+The S3 bucket remains private. Public image paths identify a revision, photograph
+and variant index; the application rechecks the active revision and streams only
+that snapshot's optimized object through Go. No client-provided storage key is
+accepted. HTML and images use `no-store` so unpublishing denies subsequent
+requests; already delivered bytes cannot be recalled. Cache policy and responsive
+image source selection remain Phase 6 work.

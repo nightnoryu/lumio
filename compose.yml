@@ -41,8 +41,10 @@ services:
       - "./backend/bin/lumio:/app/bin/lumio:ro"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.lumio-api.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/preview/`) || Path(`/healthz`) || Path(`/livez`))"
+      - "traefik.http.routers.lumio-api.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/preview/`) || Path(`/portfolio.js`) || Path(`/healthz`) || Path(`/livez`))"
       - "traefik.http.services.lumio-api.loadbalancer.server.port=8080"
+      - "traefik.http.routers.lumio-public.rule=HostRegexp(`^[a-z0-9-]+\\.localhost$`)"
+      - "traefik.http.routers.lumio-public.service=lumio-api"
     depends_on:
       lumio-storage-init:
         condition: service_completed_successfully

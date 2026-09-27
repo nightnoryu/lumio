@@ -9,8 +9,8 @@ mise install
 mise run dev
 ```
 
-Open **http://localhost:3000**. Traefik routes `/api/*`, `/healthz`, and
-`/livez` and `/preview/*` to Go; Vite serves the dashboard and hot reloads frontend edits over
+Open **http://localhost:3000**. Traefik routes `/api/*`, `/healthz`,
+`/livez`, `/preview/*` and `/portfolio.js` to Go; Vite serves the dashboard and hot reloads frontend edits over
 the same origin. Go changes need `mise run dev:reload`. Ports 3000, 5432,
 9000, and 9001 must be free.
 
@@ -102,7 +102,8 @@ Use **Refresh uploaded photographs** after processing completes.
 Concurrent saves return a conflict instead of overwriting another window's edits.
 Reloading a saved draft asks before discarding local changes. Remove profile,
 cover and gallery references and save before deleting an uploaded photograph.
-Referenced revision photos are also retained. Publishing remains Phase 5.
+Photographs referenced by the live revision are also retained until you publish
+a revision that no longer uses them, or unpublish.
 
 Templates live in `backend/internal/portfolio/page.templ`. Run
 `mise run backend:templates` after editing them; the backend build also generates
@@ -113,3 +114,28 @@ Editor tests cover form entry and save failures; PostgreSQL tests cover ownershi
 CSRF, stale saves, revision isolation, media retention and private preview access.
 Template tests check appearance selection, escaping and hidden prices. Manual
 mobile/desktop visual review with representative photographs remains a pilot check.
+
+## Publishing
+
+Add your display name, biography, contact link, and descriptions for every selected
+photograph. Save and preview the draft, then choose **Publish portfolio**.
+**Publish saved changes** replaces the live snapshot; ordinary saves remain private.
+**Unpublish portfolio** makes both the page and subsequent public image requests
+return 404. The dashboard displays the live URL and whether saved/unsaved edits
+differ from the published version. Optional page title/description fields control
+search and sharing metadata; the cover or first gallery image supplies the share image.
+
+Compose routes `http://<slug>.localhost:3000/` to Go. Browsers normally resolve
+`*.localhost` to loopback. If your resolver does not, add the chosen subdomain to
+`/etc/hosts` or use `curl --resolve anna.localhost:3000:127.0.0.1 http://anna.localhost:3000/`. After the route configuration changes, recreate the
+service with `docker compose up -d lumio` after building the executable.
+
+Visitors can open a photograph in the full-screen viewer, use Previous/Next or
+arrow keys, and close with Escape. Keyboard focus returns to the opened photograph.
+Without JavaScript, gallery links open the optimized photograph directly.
+
+Publication integration tests exercise actual PostgreSQL revisions and HTTP host
+routing with an object-store fixture. Browser checks at 1440×1000 and 390×844
+cover both templates, image loading, width/overflow and viewer keyboard/focus
+behavior with synthetic images. Real photograph review and deployed wildcard
+HTTPS remain pilot/deployment checks.

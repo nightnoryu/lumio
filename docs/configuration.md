@@ -91,5 +91,16 @@ Configure bucket CORS for the exact dashboard origin, methods PUT/GET/HEAD,
 request headers `Content-Type` and `If-None-Match`, and expose `ETag`.
 Compose sets MinIO's allowed origin to `http://localhost:3000`; change it when
 using a standalone dashboard port. Do not rewrite the host/path of signed URLs.
-All objects stay private in Phase 3. Owners receive five-minute preview URLs
-for optimized variants only. Publishing will grant access in Phase 5.
+All S3 objects stay private. Owners receive five-minute preview URLs for optimized
+variants only. Public portfolios stream optimized images through Go after checking
+the active published revision. Do not enable anonymous bucket access.
+
+## Public portfolio addresses
+
+A portfolio URL uses `<slug>.<LUMIO_BASE_DOMAIN>` and the scheme and explicit port
+of `LUMIO_DASHBOARD_ORIGIN`. For production, configure an HTTPS dashboard origin
+such as `https://app.example.com` and the base domain `example.com`, then route
+wildcard DNS/ingress to the Go service. Forward the original Host header; forwarded
+host/protocol headers are not used for tenant resolution or canonical URLs.
+The local defaults produce `http://anna.localhost:3000/` for the slug `anna`.
+Unknown, unpublished, nested, reserved or malformed portfolio hostnames return 404.
