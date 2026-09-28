@@ -1,0 +1,28 @@
+name: Validate Markdown
+
+on:
+  pull_request:
+    paths: &docs-paths
+      - 'README.md'
+      - 'docs/**'
+      - '.github/workflows/validate-docs.yml'
+  push:
+    branches: [ main ]
+    paths: *docs-paths
+
+permissions:
+  contents: read
+
+jobs:
+  markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v24
+        with:
+          globs: |
+            README.md
+            docs/**/*.md
