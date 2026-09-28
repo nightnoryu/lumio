@@ -1,0 +1,77 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: compress
+spec:
+  compress:
+    excludedContentTypes: [image/jpeg, image/png, image/webp]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lumio
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: lumio.ru
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: '*.lumio.ru'
+    traefik.ingress.kubernetes.io/router.middlewares: lumio-compress@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: 'lumio.ru'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lumio-web
+                port:
+                  number: 8080
+    - host: 'app.lumio.ru'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lumio-web
+                port:
+                  number: 8080
+    - host: '*.lumio.ru'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lumio-web
+                port:
+                  number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lumio-s3
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.priority: "1000"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: lumio.ru
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: '*.lumio.ru'
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: s3.lumio.ru
+      http:
+        paths:
+          - path: /lumio/
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000

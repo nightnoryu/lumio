@@ -1,0 +1,10 @@
+{
+  "Rules": [
+    {
+      "ID": "expire-staged-uploads",
+      "Status": "Enabled",
+      "Filter": {"Prefix": "uploads/"},
+      "Expiration": {"Days": 1}
+    }
+  ]
+}

@@ -21,3 +21,5 @@ portfolio, showcase selected work, and share it through a personal website.
 ## 📜 License
 
 Distributed under the MIT License. See [License](/LICENSE) for more information.
+
+Production manifests and the deployment/restore runbook: [k3s deployment](docs/deployment.md).

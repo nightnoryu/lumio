@@ -6,3 +6,6 @@
 /.env
 /compose.override.yml
 /ROADMAP.md
+
+/k8s/prod/secrets.env
+/k8s/prod/rendered.yaml
