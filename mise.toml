@@ -5,16 +5,18 @@ golangci-lint = "2.12.2"
 node = "26.8.1"
 pnpm = "12.3.1"
 
+# Generators and installers may leave unchanged outputs with old mtimes.
+[settings]
+task.source_freshness_hash_contents = true
+
 [env]
 GOOS = "linux"
 GOARCH = "amd64"
 CGO_ENABLED = "0"
 
+# Keep shared prerequisites in one DAG so mise executes each task only once.
 [tasks.default]
-run = [
-    { task = "build" },
-    { task = "check" },
-]
+depends = [ "build", "check" ]
 
 # Local environment
 
@@ -42,9 +44,7 @@ run = "docker compose logs -f"
 # Builds
 
 [tasks.build]
-run = [
-    { task = "backend:build" },
-]
+depends = [ "backend:build" ]
 
 [tasks."backend:tidy"]
 dir = "backend"
@@ -53,6 +53,8 @@ run = "go mod tidy"
 [tasks."backend:modules"]
 dir = "backend"
 run = "go mod download"
+sources = [ "go.mod", "go.sum", "../mise.toml" ]
+outputs = { auto = true }
 
 [tasks."backend:generate"]
 run = """ogen --clean \
@@ -61,6 +63,7 @@ run = """ogen --clean \
 --config ./backend/api/server/publicapi/.ogen.yml \
 ./api/publicapi.yml"""
 sources = [
+    "mise.toml",
     "api/publicapi.yml",
     "backend/api/server/publicapi/.ogen.yml",
 ]
@@ -70,61 +73,77 @@ outputs = [ "backend/api/server/publicapi/*_gen.go" ]
 dir = "backend"
 depends = [ "backend:modules" ]
 run = "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate"
+sources = [ "**/*.templ", "go.mod", "go.sum", "../mise.toml" ]
+outputs = [ "**/*_templ.go" ]
+
+# All Go consumers must wait until generators and embedded assets are ready.
+[tasks."backend:prepare"]
+depends = [ "backend:modules", "backend:generate", "backend:templates", "web:build" ]
 
 [tasks."backend:build"]
 dir = "backend"
-depends = [ "backend:generate", "backend:templates", "web:build" ]
+depends = [ "backend:prepare" ]
 run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
-    "go.*",
+    "../mise.toml",
+    "go.mod",
+    "go.sum",
     "**/*.go",
     "**/*.templ",
     "data/migrations/*.up.sql",
     "internal/webui/dist/**/*",
     "internal/portfolio/viewer.js",
+    "internal/portfolio/page.css",
 ]
 outputs = [ "bin/lumio" ]
 
 [tasks."web:modules"]
 dir = "web"
 run = "pnpm install --frozen-lockfile"
+sources = [ "package.json", "pnpm-lock.yaml", ".npmrc", "pnpm-workspace.yaml", "../mise.toml" ]
+outputs = [ "node_modules/.modules.yaml", "node_modules/.pnpm/lock.yaml" ]
 
 [tasks."web:generate"]
 dir = "web"
 depends = [ "web:modules" ]
 run = "pnpm run generate"
-sources = [ "api/publicapi.yml" ]
+sources = [ "../api/publicapi.yml", "package.json", "pnpm-lock.yaml", "../mise.toml" ]
 outputs = [ "src/api/schema.d.ts" ]
 
 [tasks."web:build"]
 dir = "web"
 depends = [ "web:generate" ]
 run = "pnpm run build"
+sources = [
+    "src/**/*",
+    "public/**/*",
+    "index.html",
+    "tsconfig*.json",
+    "vite.config.*",
+    "package.json",
+    "pnpm-lock.yaml",
+    "../mise.toml",
+]
+outputs = [ "../backend/internal/webui/dist/index.html", "../backend/internal/webui/dist/**/*" ]
 
 # Checks
 
 [tasks.check]
-run = [
-    { task = "test" },
-    { task = "lint" },
-]
+depends = [ "test", "lint" ]
 
 # Tests
 
 [tasks.test]
-run = [
-    { task = "backend:test:unit" },
-    { task = "web:test" },
-]
+depends = [ "backend:test:unit", "web:test" ]
 
 [tasks."backend:test:unit"]
 dir = "backend"
-depends = [ "backend:generate", "web:build" ]
+depends = [ "backend:prepare" ]
 run = "go test ./..."
 
 [tasks."backend:test:e2e"]
 dir = "backend"
-depends = [ "backend:generate" ]
+depends = [ "backend:prepare" ]
 run = "go test -tags e2e ./test/e2e/..."
 
 [tasks."backend:test:media"]
@@ -138,20 +157,20 @@ run = [
 
 [tasks."web:test"]
 dir = "web"
+depends = [ "web:generate" ]
 run = "pnpm run test"
 
 # Linting
 
 [tasks.lint]
-run = [
-    { task = "backend:lint" },
-    { task = "web:lint" },
-]
+depends = [ "backend:lint", "web:lint" ]
 
 [tasks."backend:lint"]
 dir = "backend"
+depends = [ "backend:prepare" ]
 run = [ "golangci-lint run" ]
 
 [tasks."web:lint"]
 dir = "web"
+depends = [ "web:generate" ]
 run = [ "pnpm run lint" ]
