@@ -110,3 +110,9 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           body: ${{ steps.notes.outputs.body }}
+
+  deploy:
+    name: Deploy Kubernetes
+    needs: create-release
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
