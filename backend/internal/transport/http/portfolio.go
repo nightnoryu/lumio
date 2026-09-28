@@ -16,6 +16,9 @@ import (
 )
 
 func apiDraft(d domain.Draft) (*publicapi.Draft, error) {
+	if d.Language == "" {
+		d.Language = "en"
+	}
 	raw, err := json.Marshal(d)
 	if err != nil {
 		return nil, err

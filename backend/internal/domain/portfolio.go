@@ -14,6 +14,7 @@ import (
 var ErrDraftConflict = errors.New("draft version conflict")
 
 type Draft struct {
+	Language       string             `json:"language,omitempty"`
 	SEOTitle       string             `json:"seoTitle"`
 	SEODescription string             `json:"seoDescription"`
 	Version        int64              `json:"version"`
@@ -51,9 +52,12 @@ type DraftError struct{ Message string }
 func (e *DraftError) Error() string     { return e.Message }
 func InvalidDraft(message string) error { return &DraftError{Message: message} }
 func EmptyDraft() Draft {
-	return Draft{Template: "gallery", Typography: "serif", Colour: "light", Layout: "grid", Photos: []DraftPhoto{}, Services: []PortfolioService{}, Contacts: []Contact{}}
+	return Draft{Language: "en", Template: "gallery", Typography: "serif", Colour: "light", Layout: "grid", Photos: []DraftPhoto{}, Services: []PortfolioService{}, Contacts: []Contact{}}
 }
 func (d Draft) Validate() error {
+	if d.Language != "" && d.Language != "en" && d.Language != "ru" {
+		return InvalidDraft("Choose a supported language.")
+	}
 	if d.Version < 0 || len(d.Photos) > 100 || len(d.Services) > 20 || len(d.Contacts) > 12 {
 		return InvalidDraft("Draft exceeds the supported limits.")
 	}

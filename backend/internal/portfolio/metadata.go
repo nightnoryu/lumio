@@ -21,7 +21,7 @@ func pageMetadata(d domain.Draft, images map[string]string, options []Metadata) 
 	}
 	meta.Title = strings.TrimSpace(d.SEOTitle)
 	if meta.Title == "" {
-		meta.Title = d.DisplayName + " — Photography"
+		meta.Title = d.DisplayName + " — " + localize(d, "Photography")
 	}
 	meta.Description = strings.TrimSpace(d.SEODescription)
 	if meta.Description == "" {
@@ -38,7 +38,7 @@ func pageMetadata(d domain.Draft, images map[string]string, options []Metadata) 
 	if meta.Image != "" && strings.HasPrefix(meta.Image, "/") {
 		meta.Image = strings.TrimSuffix(meta.Canonical, "/") + meta.Image
 	}
-	meta.ImageAlt = "Photography by " + d.DisplayName
+	meta.ImageAlt = localize(d, "Photography by ") + d.DisplayName
 	for _, p := range d.Photos {
 		if p.ID == id {
 			meta.ImageAlt = p.Alt

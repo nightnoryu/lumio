@@ -17,6 +17,9 @@ importers:
       '@uppy/dashboard':
         specifier: 5.1.1
         version: 5.1.1(@uppy/core@5.2.0)
+      '@uppy/locales':
+        specifier: 5.1.0
+        version: 5.1.0
       openapi-fetch:
         specifier: 0.17.0
         version: 0.17.0
@@ -524,6 +527,9 @@ packages:
     resolution: {integrity: sha512-6H/xVvhhdfwp1+FRMp2C+tudyaedqD5+LMDB8Iw20k9+QCL1eGzOh4wXm6MCqJtNfQ1tLaprGMG1jlo7yS/uyw==}
     peerDependencies:
       '@uppy/core': ^5.2.0
+
+  '@uppy/locales@5.1.0':
+    resolution: {integrity: sha512-6ijq68eLFUp+eV/faNACp+SWOGmOGcPsQBS28WEPFQb7Jg8THWCw8jik3LHzkvLBWgdpQ4n6R65PNZ2QsPkubw==}
 
   '@uppy/provider-views@5.2.2':
     resolution: {integrity: sha512-NAazIJ5sjrAc6++CeJ/u9dB5gDaaAOLHrYeEmWs/HqLlftlIinRZOybnyzJRXwI8jWI/FK5moluzt2HXu6dPQQ==}
@@ -1968,6 +1974,12 @@ snapshots:
       nanoid: 5.1.16
       preact: 10.29.8
       shallow-equal: 3.1.0
+    transitivePeerDependencies:
+      - preact-render-to-string
+
+  '@uppy/locales@5.1.0':
+    dependencies:
+      '@uppy/utils': 7.2.0
     transitivePeerDependencies:
       - preact-render-to-string
 

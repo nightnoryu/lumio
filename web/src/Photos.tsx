@@ -1,6 +1,9 @@
+import {useLanguage, translate as t} from "./i18n";
 import {useEffect, useRef, useState} from "react";
 import Uppy from "@uppy/core";
 import Dashboard from "@uppy/dashboard";
+import ru from "@uppy/locales/lib/ru_RU";
+import en from "@uppy/locales/lib/en_US";
 import AwsS3 from "@uppy/aws-s3";
 import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
@@ -9,6 +12,8 @@ import type {components} from "./api/schema";
 
 type Photo = components["schemas"]["Photo"];
 export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
+    const language = useLanguage();
+    const uploader = useRef<Uppy | null>(null);
     const target = useRef<HTMLDivElement>(null);
     const previewCache = useRef<Record<string, {url: string; expires: number}>>({});
     const watermark = useRef<HTMLInputElement>(null);
@@ -50,7 +55,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
                 let upload = uploads.get(file.id);
                 if (!upload) {
                     const result = await api.POST("/api/sites/{id}/photos", {params: {path: {id: siteId}}, headers: {"X-CSRF-Token": csrf}, body: {
-                        name: file.name ?? "Photograph", size: file.size ?? 0, contentType: file.type as "image/jpeg" | "image/png" | "image/webp", watermark: watermark.current?.value ?? "",
+                        name: file.name ?? t("Photograph"), size: file.size ?? 0, contentType: file.type as "image/jpeg" | "image/png" | "image/webp", watermark: watermark.current?.value ?? "",
                     }});
                     if (!result.data) throw failure(result.error);
                     upload = result.data; uploads.set(file.id, upload);
@@ -58,6 +63,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
                 }
                 return {method: "PUT", url: upload.url, headers: {"Content-Type": file.type, "If-None-Match": "*"}};
             }});
+        uploader.current = uppy;
         async function complete(fileId: string) {
             const upload = uploads.get(fileId); if (!upload) return;
             const result = await api.POST("/api/sites/{id}/photos/{photoId}/complete", {params: {path: {id: siteId, photoId: upload.id}}, headers: {"X-CSRF-Token": csrf, "Content-Type": "application/json"}});
@@ -71,8 +77,11 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
             void api.DELETE("/api/sites/{id}/photos/{photoId}", {params: {path: {id: siteId, photoId: upload.id}}, headers: {"X-CSRF-Token": csrf, "Content-Type": "application/json"}})
                 .then(result => {if (result.error) throw failure(result.error); setRevision(n => n + 1);}).catch((err: unknown) => setError(failure(err).message));
         });
-        return () => uppy.destroy();
+        return () => {uploader.current = null; uppy.destroy();};
     }, [siteId, csrf]);
+    useEffect(() => {
+        uploader.current?.setOptions({locale: language === "ru" ? ru : en});
+    }, [language, siteId, csrf]);
     async function action(photo: Photo, remove: boolean) {
         setError("");
         try {
@@ -83,19 +92,19 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
         } catch (err) {setError(failure(err).message);}
     }
     return <div className="photo-manager">
-        <h3>Your photographs</h3>
-        <p>Upload JPEG, PNG or WebP. Originals stay private. Failed transfers can be retried in the uploader.</p>
-        <label>Watermark for new uploads (optional)<input ref={watermark} maxLength={80} placeholder="Your name" aria-label="Watermark" /></label>
+        <h3>{t("Your photographs")}</h3>
+        <p>{t("Upload JPEG, PNG or WebP. Originals stay private. Failed transfers can be retried in the uploader.")}</p>
+        <label>{t("Watermark for new uploads (optional)")}<input ref={watermark} maxLength={80} placeholder={t("Your name")} aria-label={t("Watermark")} /></label>
         <div ref={target} />
-        {error && <p role="alert" className="error">{error}</p>}
-        {loading && <p role="status">Loading photographs…</p>}
-        {!loading && !error && !photos.length && <p>No photographs yet.</p>}
+        {error && <p role="alert" className="error">{t(error)}</p>}
+        {loading && <p role="status">{t("Loading photographs…")}</p>}
+        {!loading && !error && !photos.length && <p>{t("No photographs yet.")}</p>}
         <ul className="photo-grid">{photos.map(photo => <li key={photo.id}>
             {previews[photo.id] && <img src={previews[photo.id]} alt={photo.name} />}
-            <strong>{photo.name}</strong><span>{photo.status}</span>
-            {photo.status === "failed" && <p>Processing failed. Remove this photo and try uploading a valid image again.</p>}
-            {photo.status === "uploading" && <button className="quiet" onClick={() => void action(photo, false)}>Check completed upload</button>}
-            <button className="quiet" onClick={() => void action(photo, true)}>Remove</button>
+            <strong>{photo.name}</strong><span>{t(photo.status)}</span>
+            {photo.status === "failed" && <p>{t("Processing failed. Remove this photo and try uploading a valid image again.")}</p>}
+            {photo.status === "uploading" && <button className="quiet" onClick={() => void action(photo, false)}>{t("Check completed upload")}</button>}
+            <button className="quiet" onClick={() => void action(photo, true)}>{t("Remove")}</button>
         </li>)}</ul>
     </div>;
 }

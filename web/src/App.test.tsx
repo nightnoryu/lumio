@@ -3,6 +3,7 @@ vi.mock("./Photos", () => ({Photos: () => <div>Photographs</div>}));
 // @vitest-environment jsdom
 import {fireEvent, render, screen, waitFor, cleanup} from "@testing-library/react";
 import {afterEach, beforeEach, expect, test, vi} from "vitest";
+import {setLanguage} from "./i18n";
 import {App} from "./App";
 import {api} from "./api/client";
 
@@ -13,7 +14,7 @@ vi.mock("./api/client", () => ({
 
 const viewer = {id: "owner", email: "anna@example.com", csrfToken: "csrf-secret", baseDomain: "example.com"};
 beforeEach(() => vi.resetAllMocks());
-afterEach(cleanup);
+afterEach(() => {cleanup(); setLanguage("en"); vi.unstubAllGlobals();});
 
 test("sign in, reserve a subdomain, and sign out", async () => {
     const get = vi.mocked(api.GET);
@@ -49,4 +50,28 @@ test("shows authentication failures and allows retry", async () => {
     fireEvent.click(screen.getByRole("button", {name: "Sign in"}));
     await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Connection unavailable"));
     expect((screen.getByRole("button", {name: "Sign in"}) as HTMLButtonElement).disabled).toBe(false);
+});
+
+
+test("English is the default and the language selector persists Russian without clearing input", async () => {
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+        getItem: (key: string) => stored.get(key) ?? null,
+        setItem: (key: string, value: string) => {stored.set(key, value);},
+    });
+    vi.mocked(api.GET).mockResolvedValue({response: new Response(null, {status: 401}), error: {message: "Sign in required"}});
+    const {unmount} = render(<App />);
+    await screen.findByRole("heading", {name: "Welcome back."});
+    expect(document.documentElement.lang).toBe("en");
+    fireEvent.change(screen.getByLabelText("Email"), {target: {value: viewer.email}});
+    fireEvent.change(screen.getByLabelText("Language"), {target: {value: "ru"}});
+    expect(screen.getByRole("heading", {name: "С возвращением."})).toBeTruthy();
+    expect((screen.getByLabelText("Электронная почта") as HTMLInputElement).value).toBe(viewer.email);
+    expect(document.documentElement.lang).toBe("ru");
+    expect(window.localStorage.getItem("lumio.language")).toBe("ru");
+    unmount();
+    render(<App />);
+    await screen.findByRole("heading", {name: "С возвращением."});
+    fireEvent.change(screen.getByLabelText("Язык"), {target: {value: "en"}});
+    expect(screen.getByRole("heading", {name: "Welcome back."})).toBeTruthy();
 });

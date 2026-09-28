@@ -5,7 +5,7 @@ import "lumio/internal/domain"
 templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
  {{ meta := pageMetadata(d, images, options) }}
  <!DOCTYPE html>
- <html lang="en">
+ <html lang={ pageLanguage(d) }>
  <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -28,7 +28,7 @@ templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
   <style>html{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#faf9f6;color:#242521;font:17px/1.65 Georgia,serif}body.dark{background:#191b1a;color:#f5f3ed;color-scheme:dark}body.warm{background:#eee5d8;color:#40392f}body.sans{font-family:Arial,sans-serif}main{max-width:1280px;margin:auto;padding:48px 5vw}h1{font-size:clamp(2.6rem,7vw,6rem);line-height:1.06;letter-spacing:-.04em;font-weight:400;margin:20px 0}h2{font-size:2rem;font-weight:400}a{color:inherit;text-underline-offset:5px}p{white-space:pre-line}.intro{max-width:760px;margin:0 auto 64px;text-align:center}.profile{width:140px;height:auto}.cover{display:block;max-height:75vh;width:100%;object-fit:contain;margin-bottom:64px}section.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;align-items:start}section.gallery.column{grid-template-columns:1fr;max-width:900px;margin:auto}figure{margin:0}figure img{display:block;width:100%;height:auto}figcaption{font:14px/1.5 Arial,sans-serif;margin-top:8px;opacity:.75}.editorial .intro{text-align:left;margin-left:0;max-width:900px}.editorial section.gallery:not(.column) figure:nth-child(3n+1){grid-column:1/-1}.services{margin:80px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px}.services h2{grid-column:1/-1}article{border-top:1px solid;padding-top:16px}footer{padding:32px 0;border-top:1px solid;display:flex;gap:24px;flex-wrap:wrap}@media(max-width:640px){main{padding:32px 6vw}section.gallery{grid-template-columns:1fr;gap:24px}.intro{margin-bottom:32px}.cover{margin-bottom:32px}.services{margin:48px 0}}dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:20px;border:0;background:#151515;color:white}dialog::backdrop{background:#151515}dialog[open]{display:flex;flex-direction:column;gap:12px}dialog img{min-height:0;flex:1;object-fit:contain;width:100%}.viewer-controls{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}.viewer-controls button{padding:10px 16px;color:inherit;background:transparent;border:1px solid #aaa;font:inherit;cursor:pointer}.viewer-controls button:focus-visible,a:focus-visible{outline:3px solid #9acbff;outline-offset:4px}.viewer-controls p{margin:0}.skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;background:white;color:black;padding:12px}section.gallery a{display:block}</style>
  </head>
  <body class={ d.Colour + " " + d.Typography + " " + d.Template }>
- <a class="skip" href="#photographs">Skip to photographs</a>
+ <a class="skip" href="#photographs">{ localize(d, "Skip to photographs") }</a>
  <main>
   if d.Template == editorialTemplate {
    @Cover(d.CoverPhoto, images, meta.Sources)
@@ -39,14 +39,14 @@ templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
   }
   @Gallery(d, images, meta.Sources)
   @Services(d)
-  <footer aria-label="Contact">
+  <footer aria-label={ localize(d, "Contact") }>
    for _, c := range d.Contacts {
     <a href={ templ.SafeURL(c.URL) } rel="noopener noreferrer">{ c.Label }</a>
    }
   </footer>
  </main>
- <dialog id="photo-viewer" aria-label="Full-screen photograph">
-  <div class="viewer-controls"><button type="button" data-close>Close</button><button type="button" data-previous aria-label="Previous photograph">Previous</button><p aria-live="polite" data-position></p><button type="button" data-next aria-label="Next photograph">Next</button></div>
+ <dialog id="photo-viewer" aria-label={ localize(d, "Full-screen photograph") }>
+  <div class="viewer-controls"><button type="button" data-close>{ localize(d, "Close") }</button><button type="button" data-previous aria-label={ localize(d, "Previous photograph") }>{ localize(d, "Previous") }</button><p aria-live="polite" data-position></p><button type="button" data-next aria-label={ localize(d, "Next photograph") }>{ localize(d, "Next") }</button></div>
   <img data-viewer-image alt=""/>
   <p data-caption></p>
  </dialog>
@@ -70,10 +70,10 @@ templ Cover(id string, images map[string]string, sources map[string]string) {
  }
 }
 templ Gallery(d domain.Draft, images map[string]string, sources map[string]string) {
- <section id="photographs" class={ "gallery " + d.Layout } aria-label="Portfolio photographs">
+ <section id="photographs" class={ "gallery " + d.Layout } aria-label={ localize(d, "Portfolio photographs") }>
   for index, p := range d.Photos {
    <figure>
-    <a href={ templ.SafeURL(images[p.ID]) } data-photo aria-label={ "View photograph: " + p.Alt }>
+    <a href={ templ.SafeURL(images[p.ID]) } data-photo aria-label={ localize(d, "View photograph: ") + p.Alt }>
      <img src={ images[p.ID] } srcset={ sources[p.ID] } sizes={ gallerySizes(d, index) } alt={ p.Alt } loading={ imageLoading(d, index) } decoding="async"/>
     </a>
     if p.Category != "" {
@@ -85,8 +85,8 @@ templ Gallery(d domain.Draft, images map[string]string, sources map[string]strin
 }
 templ Services(d domain.Draft) {
  if len(d.Services) > 0 {
-  <section class="services" aria-label="Services and pricing">
-   <h2>Services</h2>
+  <section class="services" aria-label={ localize(d, "Services and pricing") }>
+   <h2>{ localize(d, "Services") }</h2>
    for _, s := range d.Services {
     <article>
      <h3>{ s.Name }</h3>

@@ -1,3 +1,4 @@
+import {setLanguage, type Language, useLanguage, translate as t} from "./i18n";
 import {useEffect, useState, type FormEvent} from "react";
 import {api, failure, type Site, type Viewer} from "./api/client";
 
@@ -18,6 +19,7 @@ async function loadDashboard() {
 }
 
 export function App() {
+    const language = useLanguage();
     const [viewer, setViewer] = useState<Viewer | null>(null);
     const [sites, setSites] = useState<Site[]>([]);
     const [loading, setLoading] = useState(true);
@@ -85,43 +87,43 @@ export function App() {
     }
 
     return <main>
-        <header><p className="brand">Lumio</p>{viewer && <button className="quiet" disabled={busy} onClick={logout}>Sign out</button>}</header>
+        <header><p className="brand">Lumio</p><label className="language-picker">{t("Language")}<select value={language} onChange={event => setLanguage(event.target.value as Language)}><option value="en">English</option><option value="ru">Русский</option></select></label>{viewer && <button className="quiet" disabled={busy} onClick={logout}>{t("Sign out")}</button>}</header>
         <section aria-labelledby="title">
-            <p className="eyebrow">Your work, beautifully framed.</p>
-            {loading ? <p role="status">Loading your dashboard…</p> : <>
-                <h1 id="title">{mode === "reset" ? "A fresh start." : viewer ? "Your portfolio." : mode === "register" ? "Make yourself at home." : "Welcome back."}</h1>
-                {error && <p role="alert" className="error">{error}</p>}
-                {notice && <p role="status">{notice}</p>}
+            <p className="eyebrow">{t("Your work, beautifully framed.")}</p>
+            {loading ? <p role="status">{t("Loading your dashboard…")}</p> : <>
+                <h1 id="title">{mode === "reset" ? t("A fresh start.") : viewer ? t("Your portfolio.") : mode === "register" ? t("Make yourself at home.") : t("Welcome back.")}</h1>
+                {error && <p role="alert" className="error">{t(error)}</p>}
+                {notice && <p role="status">{t(notice)}</p>}
                 {viewer && mode !== "reset" ? <>
-                    <p className="intro">Signed in as {viewer.email}</p>
+                    <p className="intro">{t("Signed in as")} {viewer.email}</p>
                     {sites.length ? <ul className="sites">{sites.map(site => <li key={site.id}>
                         <h2>{site.slug}.{viewer.baseDomain}</h2>
 
                         <Editor siteId={site.id} csrf={viewer.csrfToken} />
                         <Photos siteId={site.id} csrf={viewer.csrfToken} />
                     </li>)}</ul> : <form onSubmit={submit}>
-                        <p className="intro">Choose a home for your photography.</p>
-                        <label htmlFor="slug">Your subdomain</label>
+                        <p className="intro">{t("Choose a home for your photography.")}</p>
+                        <label htmlFor="slug">{t("Your subdomain")}</label>
                         <div className="subdomain"><input id="slug" name="slug" required minLength={1} maxLength={63} pattern="[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*" autoCapitalize="none" placeholder="anna" /><span>.{viewer.baseDomain}</span></div>
-                        <p className="hint">Letters, numbers and hyphens. System names are reserved.</p>
-                        <button disabled={busy}>{busy ? "Creating…" : "Create portfolio"}</button>
+                        <p className="hint">{t("Letters, numbers and hyphens. System names are reserved.")}</p>
+                        <button disabled={busy}>{busy ? t("Creating…") : t("Create portfolio")}</button>
                     </form>}
                 </> : <>
                     <form key={mode} onSubmit={submit}>
-                        {mode !== "reset" && <><label htmlFor="email">Email</label><input id="email" name="email" type="email" autoComplete="email" maxLength={254} required /></>}
-                        <label htmlFor="password">{mode === "reset" ? "New password" : "Password"}</label>
+                        {mode !== "reset" && <><label htmlFor="email">{t("Email")}</label><input id="email" name="email" type="email" autoComplete="email" maxLength={254} required /></>}
+                        <label htmlFor="password">{mode === "reset" ? t("New password") : t("Password")}</label>
                         <input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} maxLength={128} required />
-                        <p className="hint">Use at least 12 characters (up to 128 bytes).</p>
-                        {mode === "register" && <><label htmlFor="invitation">Invitation code</label><input id="invitation" name="invitation" autoComplete="off" minLength={26} maxLength={26} required /><p className="hint">Use the email address your invitation was issued to.</p></>}
-                        <button disabled={busy}>{busy ? "Please wait…" : mode === "register" ? "Create account" : mode === "reset" ? "Set new password" : "Sign in"}</button>
+                        <p className="hint">{t("Use at least 12 characters (up to 128 bytes).")}</p>
+                        {mode === "register" && <><label htmlFor="invitation">{t("Invitation code")}</label><input id="invitation" name="invitation" autoComplete="off" minLength={26} maxLength={26} required /><p className="hint">{t("Use the email address your invitation was issued to.")}</p></>}
+                        <button disabled={busy}>{busy ? t("Please wait…") : mode === "register" ? t("Create account") : mode === "reset" ? t("Set new password") : t("Sign in")}</button>
                     </form>
                     {mode !== "reset" && <button className="quiet switch" disabled={busy} onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); setNotice(""); }}>
-                        {mode === "login" ? "Have an invitation? Create an account" : "Already have an account? Sign in"}
+                        {mode === "login" ? t("Have an invitation? Create an account") : t("Already have an account? Sign in")}
                     </button>}
-                    {mode === "login" && <p className="hint">Forgot your password? Contact the person who invited you for a secure reset link.</p>}
+                    {mode === "login" && <p className="hint">{t("Forgot your password? Contact the person who invited you for a secure reset link.")}</p>}
                 </>}
             </>}
         </section>
-        <footer>Made for the way you see the world.</footer>
+        <footer>{t("Made for the way you see the world.")}</footer>
     </main>;
 }

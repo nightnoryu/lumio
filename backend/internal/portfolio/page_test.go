@@ -36,3 +36,32 @@ func TestTemplatesRenderSavedContent(t *testing.T) {
 		}
 	}
 }
+
+func TestPortfolioLanguage(t *testing.T) {
+	for _, language := range []string{"", "en", "ru"} {
+		for _, template := range []string{"gallery", "editorial"} {
+			t.Run(language+"/"+template, func(t *testing.T) {
+				d := domain.EmptyDraft()
+				d.Language = language
+				d.Template = template
+				d.DisplayName = "Anna"
+				d.Biography = "Original biography"
+				d.Photos = []domain.DraftPhoto{{ID: "photo", Alt: "Original description"}}
+				d.Services = []domain.PortfolioService{{Name: "Original service"}}
+				var out bytes.Buffer
+				if err := Page(d, map[string]string{"photo": "/photo.jpg"}).Render(t.Context(), &out); err != nil {
+					t.Fatal(err)
+				}
+				expected := []string{`lang="en"`, "Services", "Previous photograph", "Anna — Photography"}
+				if language == "ru" {
+					expected = []string{`lang="ru"`, "Услуги", "Предыдущая фотография", "Anna — Фотография", "Посмотреть фотографию: Original description"}
+				}
+				for _, text := range append(expected, "Original biography", "Original service", "Original description") {
+					if !strings.Contains(out.String(), text) {
+						t.Errorf("missing %q", text)
+					}
+				}
+			})
+		}
+	}
+}

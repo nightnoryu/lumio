@@ -45,3 +45,7 @@ h2 { font-family: Georgia, serif; font-weight: 400; overflow-wrap: anywhere; }
 .uppy-Dashboard { margin-top: 1rem; }
 
 .portfolio-editor form{max-width:none}.portfolio-editor fieldset{min-width:0;border:1px solid #d8d9d2;border-radius:8px;padding:20px;margin:24px 0}.portfolio-editor legend{font-weight:600;padding:0 8px}.portfolio-editor label{display:block;margin:16px 0}.portfolio-editor select,.portfolio-editor textarea{width:100%;padding:12px;border:1px solid #c9cdc5;border-radius:6px;background:white;color:#202820;font:inherit}.portfolio-editor .check{display:flex;gap:12px;align-items:center}.portfolio-editor .check input{width:auto}.editor-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.editor-row,.selected-photos li{padding:16px 0;border-bottom:1px solid #d8d9d2}.selected-photos{padding-left:24px}.portfolio-editor aside{padding:16px;background:#f3f0e7;border-radius:8px}.portfolio-editor h3{font-size:1.5rem}.portfolio-editor{margin-top:32px}
+
+header { flex-wrap: wrap; }
+.language-picker { margin: 0 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.language-picker select { padding: 8px; border: 1px solid #a5ab9b; border-radius: 5px; background: #fffcf6; color: inherit; font: inherit; }

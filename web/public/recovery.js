@@ -4,11 +4,13 @@
         if (shown) return;
         shown = true;
         const show = () => {
+            let russian = document.documentElement.lang === "ru";
+            try { russian = window.localStorage.getItem("lumio.language") === "ru"; } catch { /* Use the document language. */ }
             const notice = document.createElement("aside");
             notice.setAttribute("role", "alert");
-            notice.textContent = "Lumio has been updated or could not finish loading. Save any work you can, then ";
+            notice.textContent = russian ? "Lumio обновлён или не смог загрузиться. Сохраните доступные изменения, затем " : "Lumio has been updated or could not finish loading. Save any work you can, then ";
             const reload = document.createElement("button");
-            reload.textContent = "Reload Lumio";
+            reload.textContent = russian ? "Перезагрузить Lumio" : "Reload Lumio";
             reload.onclick = () => window.location.reload();
             notice.append(reload);
             document.body.prepend(notice);

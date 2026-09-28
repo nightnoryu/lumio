@@ -47,3 +47,14 @@ func TestDraftRejectsNoncanonicalPhotoReferences(t *testing.T) {
 		}
 	}
 }
+
+func TestDraftLanguageValidation(t *testing.T) {
+	for _, language := range []string{"", "en", "ru", "fr", "RU", "en ru"} {
+		d := EmptyDraft()
+		d.Language = language
+		valid := language == "" || language == "en" || language == "ru"
+		if (d.Validate() == nil) != valid {
+			t.Errorf("unexpected validation for language %q", language)
+		}
+	}
+}

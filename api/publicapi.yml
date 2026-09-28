@@ -458,6 +458,7 @@ components:
       required: [version, displayName, biography, location, specialization, profilePhoto, coverPhoto, template, typography, colour, layout, photos, services, contacts, hidePrices]
       properties:
         version: {type: integer, format: int64, minimum: 0}
+        language: {type: string, enum: [en, ru], default: en}
         seoTitle: {type: string, maxLength: 120}
         seoDescription: {type: string, maxLength: 300}
         displayName: {type: string, maxLength: 120}

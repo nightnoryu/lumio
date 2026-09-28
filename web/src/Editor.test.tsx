@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
-import {fireEvent, render, screen, cleanup} from "@testing-library/react";
+import {act, fireEvent, render, screen, cleanup} from "@testing-library/react";
 import {afterEach, expect, test, vi} from "vitest";
+import {setLanguage} from "./i18n";
 import {Editor} from "./Editor";
 import {api} from "./api/client";
 vi.mock("./Publishing", () => ({Publishing: () => <div>Publishing controls</div>}));
 vi.mock("./api/client", () => ({api: {GET: vi.fn(), PUT: vi.fn()}, failure: (error: unknown) => error instanceof Error ? error : new Error("Request failed")}));
-afterEach(() => {cleanup(); vi.resetAllMocks();});
-const draft = {version: 0, displayName: "", biography: "", location: "", specialization: "", profilePhoto: "", coverPhoto: "", template: "gallery" as const, typography: "serif" as const, colour: "light" as const, layout: "grid" as const, hidePrices: false, photos: [], services: [], contacts: []};
+afterEach(() => {cleanup(); setLanguage("en"); vi.resetAllMocks();});
+const draft = {language: "en" as const, version: 0, displayName: "", biography: "", location: "", specialization: "", profilePhoto: "", coverPhoto: "", template: "gallery" as const, typography: "serif" as const, colour: "light" as const, layout: "grid" as const, hidePrices: false, photos: [], services: [], contacts: []};
 test("create a complete private portfolio through the form and save with CSRF", async () => {
     vi.mocked(api.GET).mockResolvedValueOnce({response: new Response(), data: draft});
     vi.mocked(api.GET).mockResolvedValueOnce({response: new Response(), data: [{id: "photo", name: "Portrait.jpg", status: "ready", width: 1200, height: 800, size: 100}]});
@@ -56,4 +57,32 @@ test("reload disables editing until the saved draft arrives", async () => {
     finish({response: new Response(), data: {...draft, displayName: "Reloaded Anna"}});
     await screen.findByDisplayValue("Reloaded Anna");
     expect(screen.getByLabelText("Display name").closest("fieldset")?.disabled).toBe(false);
+});
+
+
+test("language changes preserve edits and are saved with the portfolio", async () => {
+    vi.mocked(api.GET).mockResolvedValueOnce({response: new Response(), data: draft});
+    vi.mocked(api.GET).mockResolvedValueOnce({response: new Response(), data: []});
+    vi.mocked(api.PUT).mockResolvedValue({response: new Response(), data: {...draft, language: "ru", version: 1, displayName: "Anna"}});
+    render(<Editor siteId="site" csrf="csrf"/>);
+    fireEvent.change(await screen.findByLabelText("Display name"), {target: {value: "Anna"}});
+    act(() => setLanguage("ru"));
+    expect((screen.getByLabelText("Имя") as HTMLInputElement).value).toBe("Anna");
+    expect(screen.getByText("Есть несохранённые изменения")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", {name: "Сохранить черновик"}));
+    await screen.findByText("Черновик сохранён. Опубликуйте его, чтобы посетители увидели изменения.");
+    expect(api.PUT).toHaveBeenCalledWith("/api/sites/{id}/draft", expect.objectContaining({body: expect.objectContaining({language: "ru", displayName: "Anna"})}));
+    expect(screen.getByText("Черновик сохранён")).toBeTruthy();
+    act(() => setLanguage("en"));
+    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+    expect(screen.getByText("Draft saved. Publish to make these changes public.")).toBeTruthy();
+});
+
+test("a saved portfolio restores the shared language", async () => {
+    vi.mocked(api.GET).mockResolvedValueOnce({response: new Response(), data: {...draft, language: "ru", version: 1}});
+    vi.mocked(api.GET).mockResolvedValueOnce({response: new Response(), data: []});
+    render(<Editor siteId="site" csrf="csrf"/>);
+    await screen.findByLabelText("Имя");
+    expect(document.documentElement.lang).toBe("ru");
+    expect(screen.getByText("Черновик сохранён")).toBeTruthy();
 });
