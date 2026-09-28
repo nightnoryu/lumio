@@ -46,6 +46,9 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 	if err = migrator.MigrateUp(ctx); err != nil {
 		return err
 	}
+	if len(os.Args) == 2 && os.Args[1] == "migrate" {
+		return nil
+	}
 	identity := &app.Service{Store: &postgres.Store{DB: db.TransactionalClient()}, Passwords: password.Argon{}}
 	if len(os.Args) > 1 && os.Args[1] != "worker" && os.Args[1] != "storage-init" {
 		return operatorCommand(ctx, identity, cfg, os.Args[1:])
