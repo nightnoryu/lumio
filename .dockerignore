@@ -1,0 +1,12 @@
+.git
+.idea
+.agents
+.codex
+.env*
+**/node_modules
+backend/bin
+backend/internal/webui/dist
+web/src/api/schema.d.ts
+k8s
+docs
+ROADMAP.md

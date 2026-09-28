@@ -30,6 +30,9 @@ jobs:
 
   deploy-docker:
     needs: validate
+    strategy:
+      matrix:
+        target: [web, worker]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -46,7 +49,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.target == 'worker' && '-worker' || '' }}
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest
@@ -58,11 +61,12 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
 
   create-release:
     runs-on: ubuntu-latest
