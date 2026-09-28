@@ -77,6 +77,7 @@ run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
     "go.*",
     "**/*.go",
+    "**/*.templ",
     "data/migrations/*.up.sql",
     "internal/webui/dist/**/*",
     "internal/portfolio/viewer.js",
