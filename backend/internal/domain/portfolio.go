@@ -88,10 +88,8 @@ func (d Draft) Validate() error {
 		}
 	}
 	for _, id := range []string{d.ProfilePhoto, d.CoverPhoto} {
-		if id != "" {
-			if !canonicalPhotoID(id) {
-				return InvalidDraft("Choose a valid profile or cover photograph.")
-			}
+		if id != "" && !canonicalPhotoID(id) {
+			return InvalidDraft("Choose a valid profile or cover photograph.")
 		}
 	}
 	for _, s := range d.Services {
