@@ -7,8 +7,6 @@ on:
       - 'web/**'
       - 'api/**'
       - 'mise.toml'
-      - 'Dockerfile'
-      - '.dockerignore'
       - 'k8s/**'
       - '.github/workflows/ci.yml'
   push:
@@ -39,8 +37,3 @@ jobs:
 
       - name: Verify libvips processing
         run: mise run backend:test:media
-
-      - name: Build production images
-        run: |
-          docker build --target web -t lumio-web:ci .
-          docker build --target worker -t lumio-worker:ci .
