@@ -13,7 +13,7 @@ func TestNormalizeSlug(t *testing.T) {
 			t.Errorf("NormalizeSlug(%q) = %q, %v", input, got, err)
 		}
 	}
-	for _, input := range []string{"", "-anna", "anna-", "anna.photo", "a_b", "фото", "xn--photo", "APP", "api", "www", "admin", "grafana", "mail", strings.Repeat("a", 64)} {
+	for _, input := range []string{"", "-anna", "anna-", "anna.photo", "a_b", "фото", "xn--photo", "APP", "api", "www", "admin", "grafana", "s3", "mail", strings.Repeat("a", 64)} {
 		if _, err := NormalizeSlug(input); err == nil {
 			t.Errorf("accepted %q", input)
 		}

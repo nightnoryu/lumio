@@ -41,7 +41,7 @@ func NormalizeSlug(value string) (string, error) {
 		return "", ErrInvalid
 	}
 	switch value {
-	case "app", "api", "www", "admin", "grafana", "mail", "smtp", "support", "status", "static", "assets", "cdn", "lumio", "localhost":
+	case "app", "api", "www", "admin", "grafana", "s3", "mail", "smtp", "support", "status", "static", "assets", "cdn", "lumio", "localhost":
 		return "", ErrInvalid
 	}
 	return value, nil
