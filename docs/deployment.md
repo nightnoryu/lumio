@@ -33,9 +33,11 @@ private key is available.
 The generated Secret has a stable name. After changing it, restart web, worker
 and the affected data-service Deployments so their environment is refreshed.
 Changing PostgreSQL's Secret does not rotate an existing database role password;
-coordinate the database role and MinIO application-user password changes first. Set immutable release tags
-(or image digests) in `k8s/prod/kustomization.yaml`. Release CI publishes both
-images. Local Compose continues using the development Dockerfiles in `backend/`.
+coordinate the database role and MinIO application-user password changes first.
+The deploy workflow selects the matching version tags for both images after a
+release. For a manual deploy, supply an image tag or use the tags committed in
+`k8s/prod/kustomization.yaml`. Release CI publishes both images. Local Compose
+continues using the development Dockerfiles in `backend/`.
 Tool versions and dependency locks are pinned; exact image bytes also require
 pinning upstream image digests and an immutable Alpine package mirror.
 
@@ -75,10 +77,19 @@ Run this sequence only when deployment is authorized:
    Secret, PVCs, PostgreSQL/MinIO Deployments, Services and NetworkPolicies first.
    Wait for both data services to become ready. Do not start web/worker yet.
 3. Provision the dedicated private bucket and application account below.
-4. Install the remaining web/worker and Ingress manifests. Application startup
-   applies embedded migrations under a PostgreSQL advisory lock. A failing
-   migration or missing lifecycle rule prevents application startup.
+4. Run the `Apply Kubernetes Manifests` workflow or apply the migration Job
+   before the remaining web/worker and Ingress manifests. The Job runs embedded
+   migrations under a PostgreSQL advisory lock; a failed migration stops the
+   rollout. Application startup also applies pending migrations. A missing
+   storage lifecycle rule prevents application startup.
 5. Verify rollout, trusted HTTPS, storage CORS and the full upload/publish path.
+
+The deploy workflow requires the `prod` environment with `KUBECONFIG` and
+`SOPS_AGE_KEY` secrets. It applies the namespace, config, secret and data
+services first, waits for PostgreSQL and MinIO, recreates and waits for the
+migration Job, then applies the remaining resources and waits for web/worker.
+The release workflow calls it after publishing the GitHub Release. Provision
+the MinIO bucket, user, policy and lifecycle rules before the first rollout.
 
 For storage provisioning, forward MinIO's API locally (no public console or
 admin API is routed). In a separate terminal, use
