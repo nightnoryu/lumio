@@ -34,7 +34,7 @@ test("sign in, reserve a subdomain, and sign out", async () => {
     fireEvent.click(screen.getByRole("button", {name: "Create portfolio"}));
     await screen.findByRole("heading", {name: "anna.example.com"});
     expect(api.POST).toHaveBeenCalledWith("/api/sites", {body: {slug: "anna"}, headers: {"X-CSRF-Token": viewer.csrfToken}});
-    expect(screen.getByText("Portfolio editor")).toBeTruthy();
+    expect(await screen.findByText("Portfolio editor")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", {name: "Sign out"}));
     await screen.findByRole("heading", {name: "Welcome back."});
     expect(api.POST).toHaveBeenCalledWith("/api/auth/logout", {headers: {"X-CSRF-Token": viewer.csrfToken}});

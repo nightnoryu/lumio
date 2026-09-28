@@ -1,9 +1,9 @@
 import {setLanguage, type Language, useLanguage, translate as t} from "./i18n";
-import {useEffect, useState, type FormEvent} from "react";
+import {lazy, Suspense, useEffect, useState, type FormEvent} from "react";
 import {api, failure, type Site, type Viewer} from "./api/client";
 
-import {Editor} from "./Editor";
-import {Photos} from "./Photos";
+const Editor = lazy(() => import("./Editor").then(module => ({default: module.Editor})));
+const Photos = lazy(() => import("./Photos").then(module => ({default: module.Photos})));
 
 type Mode = "login" | "register" | "reset";
 const resetToken = new URLSearchParams(window.location.hash.slice(1)).get("reset") ?? "";
@@ -99,8 +99,12 @@ export function App() {
                     {sites.length ? <ul className="sites">{sites.map(site => <li key={site.id}>
                         <h2>{site.slug}.{viewer.baseDomain}</h2>
 
-                        <Editor siteId={site.id} csrf={viewer.csrfToken} />
-                        <Photos siteId={site.id} csrf={viewer.csrfToken} />
+                        <Suspense fallback={<p role="status">{t("Loading portfolio editor…")}</p>}>
+                            <Editor siteId={site.id} csrf={viewer.csrfToken} />
+                        </Suspense>
+                        <Suspense fallback={<p role="status">{t("Loading photographs…")}</p>}>
+                            <Photos siteId={site.id} csrf={viewer.csrfToken} />
+                        </Suspense>
                     </li>)}</ul> : <form onSubmit={submit}>
                         <p className="intro">{t("Choose a home for your photography.")}</p>
                         <label htmlFor="slug">{t("Your subdomain")}</label>
