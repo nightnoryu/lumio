@@ -86,9 +86,9 @@ export function App() {
         finally { setBusy(false); }
     }
 
-    return <main>
-        <header><p className="brand">Lumio</p><label className="language-picker">{t("Language")}<select value={language} onChange={event => setLanguage(event.target.value as Language)}><option value="en">English</option><option value="ru">Русский</option></select></label>{viewer && <button className="quiet" disabled={busy} onClick={logout}>{t("Sign out")}</button>}</header>
-        <section aria-labelledby="title">
+    return <main className="app-shell">
+        <header className="app-header"><p className="brand">Lumio</p><label className="language-picker">{t("Language")}<select value={language} onChange={event => setLanguage(event.target.value as Language)}><option value="en">English</option><option value="ru">Русский</option></select></label>{viewer && <button className="quiet" disabled={busy} onClick={logout}>{t("Sign out")}</button>}</header>
+        <section className="page-content" aria-labelledby="title">
             <p className="eyebrow">{t("Your work, beautifully framed.")}</p>
             {loading ? <p role="status">{t("Loading your dashboard…")}</p> : <>
                 <h1 id="title">{mode === "reset" ? t("A fresh start.") : viewer ? t("Your portfolio.") : mode === "register" ? t("Make yourself at home.") : t("Welcome back.")}</h1>

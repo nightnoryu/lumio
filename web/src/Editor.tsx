@@ -101,7 +101,7 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
                     <strong>{photos.find(photo => photo.id === p.id)?.name ?? t("Unavailable photograph")}</strong>
                     <label>{t("Image description")}<input maxLength={300} value={p.alt} onChange={e => change({photos: draft.photos.map((item, n) => n === i ? {...item, alt: e.target.value} : item)})}/></label>
                     <label>{t("Category (optional)")}<input maxLength={80} placeholder={t("Portraits")} value={p.category} onChange={e => change({photos: draft.photos.map((item, n) => n === i ? {...item, category: e.target.value} : item)})}/></label>
-                    <div className="editor-actions"><button type="button" disabled={i === 0} onClick={() => move(i, -1)}>{t("Move up")}</button><button type="button" disabled={i === draft.photos.length - 1} onClick={() => move(i, 1)}>{t("Move down")}</button><button type="button" onClick={() => change({photos: draft.photos.filter((_, n) => n !== i)})}>{t("Deselect")}</button></div>
+                    <div className="editor-actions"><button type="button" className="secondary" disabled={i === 0} onClick={() => move(i, -1)}>{t("Move up")}</button><button type="button" className="secondary" disabled={i === draft.photos.length - 1} onClick={() => move(i, 1)}>{t("Move down")}</button><button type="button" className="danger" onClick={() => change({photos: draft.photos.filter((_, n) => n !== i)})}>{t("Deselect")}</button></div>
                 </li>)}</ol>
             </fieldset>
             <fieldset disabled={busy}>
@@ -111,9 +111,9 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
                     <label>{t("Service name")}<input required maxLength={120} value={service.name} onChange={e => change({services: draft.services.map((s, n) => n === i ? {...s, name: e.target.value} : s)})}/></label>
                     <label>{t("Description")}<textarea maxLength={1000} value={service.description} onChange={e => change({services: draft.services.map((s, n) => n === i ? {...s, description: e.target.value} : s)})}/></label>
                     <label>{t("Price")}<input maxLength={100} placeholder={t("From €250")} value={service.price} onChange={e => change({services: draft.services.map((s, n) => n === i ? {...s, price: e.target.value} : s)})}/></label>
-                    <button type="button" className="quiet" onClick={() => change({services: draft.services.filter((_, n) => n !== i)})}>{t("Remove service")}</button>
+                    <button type="button" className="danger" onClick={() => change({services: draft.services.filter((_, n) => n !== i)})}>{t("Remove service")}</button>
                 </div>)}
-                <button type="button" disabled={draft.services.length >= 20} onClick={() => change({services: [...draft.services, {name: "", description: "", price: ""}]})}>{t("Add service")}</button>
+                <button type="button" className="secondary" disabled={draft.services.length >= 20} onClick={() => change({services: [...draft.services, {name: "", description: "", price: ""}]})}>{t("Add service")}</button>
             </fieldset>
             <fieldset disabled={busy}>
                 <legend>{t("Contact links")}</legend>
@@ -121,9 +121,9 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
                 {draft.contacts.map((contact, i) => <div className="editor-row" key={i}>
                     <label>{t("Link label")}<input required maxLength={60} placeholder={t("Email / Telegram / WhatsApp")} value={contact.label} onChange={e => change({contacts: draft.contacts.map((c, n) => n === i ? {...c, label: e.target.value} : c)})}/></label>
                     <label>{t("Contact address")}<input required maxLength={500} placeholder="mailto:hello@example.com" value={contact.url} onChange={e => change({contacts: draft.contacts.map((c, n) => n === i ? {...c, url: e.target.value} : c)})}/></label>
-                    <button type="button" className="quiet" onClick={() => change({contacts: draft.contacts.filter((_, n) => n !== i)})}>{t("Remove contact")}</button>
+                    <button type="button" className="danger" onClick={() => change({contacts: draft.contacts.filter((_, n) => n !== i)})}>{t("Remove contact")}</button>
                 </div>)}
-                <button type="button" disabled={draft.contacts.length >= 12} onClick={() => change({contacts: [...draft.contacts, {label: "", url: ""}]})}>{t("Add contact")}</button>
+                <button type="button" className="secondary" disabled={draft.contacts.length >= 12} onClick={() => change({contacts: [...draft.contacts, {label: "", url: ""}]})}>{t("Add contact")}</button>
             </fieldset>
             <fieldset disabled={busy}>
                 <legend>{t("Search and sharing")}</legend>

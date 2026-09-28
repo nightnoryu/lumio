@@ -104,7 +104,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
             <strong>{photo.name}</strong><span>{t(photo.status)}</span>
             {photo.status === "failed" && <p>{t("Processing failed. Remove this photo and try uploading a valid image again.")}</p>}
             {photo.status === "uploading" && <button className="quiet" onClick={() => void action(photo, false)}>{t("Check completed upload")}</button>}
-            <button className="quiet" onClick={() => void action(photo, true)}>{t("Remove")}</button>
+            <button className="danger" onClick={() => void action(photo, true)}>{t("Remove")}</button>
         </li>)}</ul>
     </div>;
 }

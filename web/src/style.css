@@ -1,51 +1,99 @@
-:root {
-    font-family: Arial, sans-serif;
-    color: #292c25;
-    background: #f5f3ed;
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Inter", "Segoe UI", Arial, sans-serif;
+    --font-serif: Georgia, "Times New Roman", serif;
+    --color-ink: #29382e;
+    --color-muted: #626b60;
+    --color-paper: #f6f5f0;
+    --color-line: #d9dfd4;
+    --color-accent: #365740;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; }
-main { min-height: 100svh; max-width: 1200px; margin: auto; padding: 48px 7vw; display: flex; flex-direction: column; }
-.brand { margin: 0; font-size: 26px; letter-spacing: -1px; }
-section { margin: auto 0; padding: 90px 0; max-width: 760px; }
-.eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
-h1 { font-family: Georgia, serif; font-weight: 400; font-size: clamp(42px, 7vw, 80px); line-height: 1.06; letter-spacing: -0.04em; margin: 28px 0; }
-.intro { max-width: 490px; font-size: 18px; line-height: 1.7; color: #5c6056; }
-.note { border-top: 1px solid #d6d9cb; margin-top: 42px; padding-top: 20px; font-size: 14px; color: #5c6056; }
-footer { font-size: 12px; color: #5c6056; }
+@layer base {
+    :root { @apply font-sans text-ink bg-paper antialiased; font-synthesis: none; text-rendering: optimizeLegibility; }
+    body { @apply m-0 min-w-0; }
+    h1 { @apply my-7 font-serif text-5xl leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl; }
+    h2 { @apply font-serif text-2xl sm:text-3xl; overflow-wrap: anywhere; }
+    h3 { @apply mb-3 text-xl font-semibold tracking-tight sm:text-2xl; }
+    p { @apply leading-relaxed; }
+    a { @apply text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent; overflow-wrap: anywhere; }
+    :focus-visible { @apply outline-2 outline-offset-4 outline-accent; }
+}
 
-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-form { display: grid; gap: 12px; max-width: 450px; }
-label { font-size: 14px; margin-top: 8px; }
-input { width: 100%; min-width: 0; padding: 13px; border: 1px solid #a5ab9b; border-radius: 5px; background: #fffcf6; font: inherit; color: inherit; }
-button { border: 0; border-radius: 5px; padding: 14px 20px; background: #343f30; color: #fff; font: inherit; cursor: pointer; }
-button:disabled { opacity: .6; cursor: wait; }
-:focus-visible { outline: 3px solid #71895e; outline-offset: 3px; }
-.quiet { background: transparent; color: #343f30; padding: 10px 0; text-decoration: underline; }
-.switch { margin-top: 18px; text-align: left; }
-.hint { font-size: 13px; color: #5c6056; line-height: 1.5; margin: 0 0 10px; max-width: 450px; }
-.error { border-left: 3px solid #9b3329; padding: 12px; color: #852b23; background: #f7e5df; }
-.subdomain { display: flex; align-items: center; gap: 8px; }
-.subdomain span { overflow-wrap: anywhere; }
-.sites { padding: 0; list-style: none; }
-.sites li { border: 1px solid #d6d9cb; border-radius: 8px; padding: 24px; }
-h2 { font-family: Georgia, serif; font-weight: 400; overflow-wrap: anywhere; }
-.badge { font-size: 12px; padding: 5px 10px; background: #e3e6d9; border-radius: 20px; }
-@media (max-width: 600px) { main { padding: 28px 6vw; } section { padding: 50px 0; } }
+@layer components {
+    .app-shell { @apply mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-6 sm:px-8 sm:py-8 lg:px-12; }
+    .app-header { @apply flex flex-wrap items-center justify-between gap-3 border-b border-line pb-5 sm:gap-5; }
+    .brand { @apply m-0 text-2xl font-semibold tracking-tighter; }
+    .page-content { @apply my-auto w-full min-w-0 py-10 sm:py-16; }
+    .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.16em] text-muted; }
+    .intro { @apply mb-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg; overflow-wrap: anywhere; }
+    .app-shell > footer { @apply border-t border-line pt-5 text-xs text-muted; }
+    .app-shell form { @apply grid min-w-0 max-w-md gap-3; }
+    .app-shell label { @apply text-sm font-medium; }
+    /* Scope controls to our UI so Uppy keeps its own button and input styles. */
+    .app-shell :where(input:not([type="checkbox"]), select, textarea):where(:not(.uppy-Root *)) {
+        @apply min-h-12 w-full min-w-0 rounded-xl border border-line bg-white px-3.5 py-3 text-base text-ink shadow-sm transition-colors placeholder:text-muted/70 hover:border-accent/50 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-muted;
+    }
+    .app-shell select {
+        @apply cursor-pointer appearance-none truncate pr-11;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23365740' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+        background-position: right 14px center;
+        background-repeat: no-repeat;
+    }
+    .app-shell textarea { @apply resize-y; }
+    .app-shell :where(button):not(.uppy-Root *) {
+        @apply inline-flex min-h-12 max-w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent bg-accent px-5 py-3 text-center text-sm font-semibold leading-5 text-white shadow-sm transition-colors hover:bg-ink active:bg-ink disabled:cursor-not-allowed disabled:opacity-45;
+        overflow-wrap: anywhere;
+        touch-action: manipulation;
+    }
+    .app-shell button.quiet, .app-shell button.secondary { @apply border-line bg-white text-accent shadow-none hover:border-accent/40 hover:bg-accent/5; }
+    .app-shell button.danger { @apply border-red-200 bg-red-50 text-red-800 shadow-none hover:border-red-300 hover:bg-red-100; }
+    .app-shell button.switch { @apply mt-4 mb-5 w-full max-w-md; }
+    .hint { @apply mb-3 max-w-xl text-sm leading-relaxed text-muted; overflow-wrap: anywhere; }
+    .error { @apply my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800; overflow-wrap: anywhere; }
+    .subdomain { @apply flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center; }
+    .subdomain span { @apply text-sm text-muted; overflow-wrap: anywhere; }
+    .sites { @apply m-0 grid list-none gap-6 p-0; }
+    .sites > li { @apply min-w-0 rounded-2xl border border-line bg-white/70 p-4 shadow-sm sm:p-7; }
+    .badge { @apply inline-flex max-w-full rounded-full border border-accent/15 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent; }
+    .language-picker { @apply ml-auto flex min-w-0 flex-wrap items-center gap-2 text-muted; }
+    .language-picker select { @apply w-auto; }
+    .portfolio-editor { @apply mt-7; }
+    .portfolio-editor > p { @apply mb-3 text-muted; }
+    .portfolio-editor form { @apply max-w-none gap-5; }
+    .portfolio-editor fieldset { @apply m-0 min-w-0 rounded-2xl border border-line bg-white p-4 sm:p-6; }
+    .portfolio-editor legend { @apply px-2 text-base font-semibold; }
+    .portfolio-editor label { @apply my-4 block; }
+    .portfolio-editor label > :is(input, select, textarea), .photo-manager label > input { @apply mt-2; }
+    .portfolio-editor .check { @apply flex min-h-11 items-center gap-3; }
+    .portfolio-editor .check input { @apply m-0 size-5 shrink-0 accent-accent; }
+    .editor-actions { @apply my-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center; }
+    .editor-actions > :is(button, a) { @apply w-full sm:w-auto; }
+    .editor-actions > a { @apply inline-flex min-h-12 items-center justify-center rounded-xl border border-line bg-white px-4 py-3 text-sm font-semibold no-underline hover:bg-accent/5; }
+    .editor-actions > span { @apply text-sm text-muted; }
+    .editor-row, .selected-photos li { @apply mb-4 min-w-0 border-b border-line pb-5; overflow-wrap: anywhere; }
+    .selected-photos { @apply mt-5 list-decimal pl-5; }
+    .portfolio-editor aside { @apply rounded-xl border border-amber-200/70 bg-amber-50 p-4 text-sm text-stone-700; }
+    .portfolio-editor aside ul { @apply my-3 list-disc space-y-1 pl-5; }
+    .publishing { @apply my-6 rounded-2xl border border-line bg-paper p-4 sm:p-5; }
+    .publishing > p { @apply mb-3; }
+    .publishing .hint { @apply mb-0; }
+    .photo-manager { @apply mt-10 min-w-0 border-t border-line pt-7; }
+    .photo-manager > p { @apply mb-5 text-sm text-muted; }
+    .photo-manager > label { @apply block max-w-md; }
+    .photo-grid { @apply mt-5 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3; }
+    .photo-grid li { @apply flex min-w-0 flex-col gap-3 rounded-xl border border-line bg-white p-3; overflow-wrap: anywhere; }
+    .photo-grid img { @apply h-48 w-full rounded-lg bg-paper object-contain; }
+    .photo-grid span { @apply text-xs text-muted; }
+    .photo-grid button { @apply mt-auto; }
+    .uppy-Dashboard { @apply mt-5; }
+    .uppy-Dashboard-inner { max-width: 100%; }
+}
 
-.photo-manager { margin-top: 1.5rem; }
-.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; padding: 0; list-style: none; }
-.photo-grid li { display: flex; flex-direction: column; gap: .5rem; min-width: 0; overflow-wrap: anywhere; }
-.photo-grid img { width: 100%; height: 180px; object-fit: contain; background: #eee; }
-.photo-grid span { font-size: .85rem; }
-.uppy-Dashboard { margin-top: 1rem; }
-
-.portfolio-editor form{max-width:none}.portfolio-editor fieldset{min-width:0;border:1px solid #d8d9d2;border-radius:8px;padding:20px;margin:24px 0}.portfolio-editor legend{font-weight:600;padding:0 8px}.portfolio-editor label{display:block;margin:16px 0}.portfolio-editor select,.portfolio-editor textarea{width:100%;padding:12px;border:1px solid #c9cdc5;border-radius:6px;background:white;color:#202820;font:inherit}.portfolio-editor .check{display:flex;gap:12px;align-items:center}.portfolio-editor .check input{width:auto}.editor-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.editor-row,.selected-photos li{padding:16px 0;border-bottom:1px solid #d8d9d2}.selected-photos{padding-left:24px}.portfolio-editor aside{padding:16px;background:#f3f0e7;border-radius:8px}.portfolio-editor h3{font-size:1.5rem}.portfolio-editor{margin-top:32px}
-
-header { flex-wrap: wrap; }
-.language-picker { margin: 0 0 0 auto; display: flex; align-items: center; gap: 8px; }
-.language-picker select { padding: 8px; border: 1px solid #a5ab9b; border-radius: 5px; background: #fffcf6; color: inherit; font: inherit; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
+@media (forced-colors: active) {
+    .app-shell select { appearance: auto; background-image: none; }
+}
