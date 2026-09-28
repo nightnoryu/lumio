@@ -31,6 +31,9 @@ window.addEventListener("storage", event => {
     }
 });
 const russian: Record<string, string> = {
+    "Gallery — fine-art exhibition": "Галерея — выставка художественной фотографии",
+    "Editorial — cinematic photo essay": "Журнал — кинематографичные фотоистории",
+    "Studio — playful, graphic posters": "Студия — яркие графические постеры",
     "Something went wrong. Please try again.": "Что-то пошло не так. Попробуйте снова.",
     "This draft changed in another window. Reload before saving again.": "Черновик изменён в другом окне. Загрузите его заново перед сохранением.",
     "Photo or storage quota reached. Remove unused photos and wait for cleanup before retrying.": "Достигнут лимит фотографий или хранилища. Удалите ненужные фотографии и дождитесь освобождения места.",

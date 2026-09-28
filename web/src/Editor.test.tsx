@@ -16,7 +16,7 @@ test("create a complete private portfolio through the form and save with CSRF", 
     await screen.findByLabelText("Display name");
     fireEvent.change(screen.getByLabelText("Display name"), {target: {value: "Anna"}});
     fireEvent.change(screen.getByLabelText("Biography"), {target: {value: "Portrait photographer"}});
-    fireEvent.change(screen.getByLabelText("Template"), {target: {value: "editorial"}});
+    fireEvent.change(screen.getByLabelText("Template"), {target: {value: "studio"}});
     fireEvent.change(screen.getByLabelText("Add photograph"), {target: {value: "photo"}});
     fireEvent.change(screen.getByLabelText("Image description"), {target: {value: "A portrait in sunlight"}});
     fireEvent.click(screen.getByRole("button", {name: "Add service"}));
@@ -28,7 +28,7 @@ test("create a complete private portfolio through the form and save with CSRF", 
     fireEvent.change(screen.getByLabelText("Contact address"), {target: {value: "mailto:anna@example.com"}});
     fireEvent.click(screen.getByRole("button", {name: "Save draft"}));
     await screen.findByText("Draft saved. Publish to make these changes public.");
-    expect(api.PUT).toHaveBeenCalledWith("/api/sites/{id}/draft", expect.objectContaining({headers: {"X-CSRF-Token": "csrf"}, body: expect.objectContaining({displayName: "Anna", template: "editorial", hidePrices: true, photos: [{id: "photo", alt: "A portrait in sunlight", category: ""}], contacts: [{label: "Email", url: "mailto:anna@example.com"}]})}));
+    expect(api.PUT).toHaveBeenCalledWith("/api/sites/{id}/draft", expect.objectContaining({headers: {"X-CSRF-Token": "csrf"}, body: expect.objectContaining({displayName: "Anna", template: "studio", hidePrices: true, photos: [{id: "photo", alt: "A portrait in sunlight", category: ""}], contacts: [{label: "Email", url: "mailto:anna@example.com"}]})}));
     expect(screen.getByRole("link", {name: /Preview saved/}).getAttribute("href")).toBe("/preview/site");
 });
 test("failed saves preserve edits", async () => {

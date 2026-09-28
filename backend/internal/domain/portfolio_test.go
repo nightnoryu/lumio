@@ -58,3 +58,13 @@ func TestDraftLanguageValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestDraftTemplates(t *testing.T) {
+	for _, template := range []string{"gallery", "editorial", "studio"} {
+		d := EmptyDraft()
+		d.Template = template
+		if err := d.Validate(); err != nil {
+			t.Errorf("%s: %v", template, err)
+		}
+	}
+}

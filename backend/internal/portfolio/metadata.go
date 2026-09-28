@@ -7,7 +7,10 @@ import (
 	"lumio/internal/domain"
 )
 
-const editorialTemplate = "editorial"
+const (
+	editorialTemplate = "editorial"
+	studioTemplate    = "studio"
+)
 
 type Metadata struct {
 	Canonical, Title, Description, Image, ImageAlt string
@@ -52,10 +55,13 @@ func gallerySizes(d domain.Draft, index int) string {
 	if d.Layout == "column" {
 		return "(max-width: 640px) 88vw, (max-width: 1000px) 90vw, 900px"
 	}
-	if d.Template == editorialTemplate && index%3 == 0 {
-		return "(max-width: 640px) 88vw, (max-width: 1280px) 90vw, 1152px"
+	if d.Template == studioTemplate {
+		return "(max-width: 800px) 44vw, (max-width: 1600px) 30vw, 460px"
 	}
-	return "(max-width: 640px) 88vw, (max-width: 1280px) calc(45vw - 16px), 560px"
+	if d.Template == editorialTemplate && index%3 == 0 {
+		return "100vw"
+	}
+	return "(max-width: 640px) 88vw, (max-width: 1600px) 45vw, 704px"
 }
 func imageLoading(d domain.Draft, index int) string {
 	if d.CoverPhoto == "" && index == 0 {

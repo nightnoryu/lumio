@@ -64,7 +64,7 @@ func (d Draft) Validate() error {
 	for _, choice := range []struct {
 		value   string
 		allowed string
-	}{{d.Template, "gallery editorial"}, {d.Typography, "serif sans"}, {d.Colour, "light dark warm"}, {d.Layout, "grid column"}} {
+	}{{d.Template, "gallery editorial studio"}, {d.Typography, "serif sans"}, {d.Colour, "light dark warm"}, {d.Layout, "grid column"}} {
 		if !slices.Contains(strings.Fields(choice.allowed), choice.value) || choice.value == "" {
 			return InvalidDraft("Choose a supported appearance option.")
 		}

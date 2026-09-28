@@ -467,7 +467,7 @@ components:
         specialization: {type: string, maxLength: 160}
         profilePhoto: {type: string, maxLength: 36}
         coverPhoto: {type: string, maxLength: 36}
-        template: {type: string, enum: [gallery, editorial]}
+        template: {type: string, enum: [gallery, editorial, studio]}
         typography: {type: string, enum: [serif, sans]}
         colour: {type: string, enum: [light, dark, warm]}
         layout: {type: string, enum: [grid, column]}

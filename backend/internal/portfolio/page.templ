@@ -25,26 +25,63 @@ templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
    <meta property="og:image:alt" content={ meta.ImageAlt }/>
   }
   <script src="/portfolio.js" defer></script>
-  <style>html{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#faf9f6;color:#242521;font:17px/1.65 Georgia,serif}body.dark{background:#191b1a;color:#f5f3ed;color-scheme:dark}body.warm{background:#eee5d8;color:#40392f}body.sans{font-family:Arial,sans-serif}main{max-width:1280px;margin:auto;padding:48px 5vw}h1{font-size:clamp(2.6rem,7vw,6rem);line-height:1.06;letter-spacing:-.04em;font-weight:400;margin:20px 0}h2{font-size:2rem;font-weight:400}a{color:inherit;text-underline-offset:5px}p{white-space:pre-line}.intro{max-width:760px;margin:0 auto 64px;text-align:center}.profile{width:140px;height:auto}.cover{display:block;max-height:75vh;width:100%;object-fit:contain;margin-bottom:64px}section.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;align-items:start}section.gallery.column{grid-template-columns:1fr;max-width:900px;margin:auto}figure{margin:0}figure img{display:block;width:100%;height:auto}figcaption{font:14px/1.5 Arial,sans-serif;margin-top:8px;opacity:.75}.editorial .intro{text-align:left;margin-left:0;max-width:900px}.editorial section.gallery:not(.column) figure:nth-child(3n+1){grid-column:1/-1}.services{margin:80px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px}.services h2{grid-column:1/-1}article{border-top:1px solid;padding-top:16px}footer{padding:32px 0;border-top:1px solid;display:flex;gap:24px;flex-wrap:wrap}@media(max-width:640px){main{padding:32px 6vw}section.gallery{grid-template-columns:1fr;gap:24px}.intro{margin-bottom:32px}.cover{margin-bottom:32px}.services{margin:48px 0}}dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:20px;border:0;background:#151515;color:white}dialog::backdrop{background:#151515}dialog[open]{display:flex;flex-direction:column;gap:12px}dialog img{min-height:0;flex:1;object-fit:contain;width:100%}.viewer-controls{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}.viewer-controls button{padding:10px 16px;color:inherit;background:transparent;border:1px solid #aaa;font:inherit;cursor:pointer}.viewer-controls button:focus-visible,a:focus-visible{outline:3px solid #9acbff;outline-offset:4px}.viewer-controls p{margin:0}.skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;background:white;color:black;padding:12px}section.gallery a{display:block}</style>
+  @templ.Raw("<style>" + portfolioCSS + "</style>")
  </head>
  <body class={ d.Colour + " " + d.Typography + " " + d.Template }>
- <a class="skip" href="#photographs">{ localize(d, "Skip to photographs") }</a>
- <main>
-  if d.Template == editorialTemplate {
-   @Cover(d.CoverPhoto, images, meta.Sources)
-   @Profile(d, images, meta.Sources)
-  } else {
-   @Profile(d, images, meta.Sources)
-   @Cover(d.CoverPhoto, images, meta.Sources)
-  }
-  @Gallery(d, images, meta.Sources)
-  @Services(d)
-  <footer aria-label={ localize(d, "Contact") }>
-   for _, c := range d.Contacts {
-    <a href={ templ.SafeURL(c.URL) } rel="noopener noreferrer">{ c.Label }</a>
+ <a class="skip" href="#main">{ localize(d, "Skip to content") }</a>
+ <div class="shell" id="top">
+ <header class="site-header">
+  <a class="brand" href="#top">{ d.DisplayName }<span aria-hidden="true"> ✳</span></a>
+  <nav aria-label={ localize(d, "Main navigation") }>
+   if len(d.Photos) > 0 {
+    <a href="#photographs">{ localize(d, "Work") }</a>
    }
-  </footer>
+   if d.Biography != "" || d.ProfilePhoto != "" {
+    <a href="#about">{ localize(d, "About") }</a>
+   }
+   if len(d.Contacts) > 0 {
+    <a href="#contact">{ localize(d, "Contact") } ↗</a>
+   }
+  </nav>
+ </header>
+ <main id="main">
+  <div class="hero">
+   @Profile(d)
+   @Cover(d.CoverPhoto, images, meta.Sources)
+  </div>
+  if len(d.Photos) > 0 {
+   <div class="section-heading"><span class="eyebrow">01 / { localize(d, "Portfolio") }</span><h2>{ localize(d, "Selected work") }</h2></div>
+   @Gallery(d, images, meta.Sources)
+  }
+  if d.Biography != "" || d.ProfilePhoto != "" {
+   <section class="about" id="about" aria-label={ localize(d, "About") }>
+    <div><span class="eyebrow">{ localize(d, "Behind the lens") }</span>
+     if d.ProfilePhoto != "" {
+      <img class="profile" src={ images[d.ProfilePhoto] } srcset={ meta.Sources[d.ProfilePhoto] } sizes="240px" alt={ d.DisplayName } loading="lazy"/>
+     }
+    </div>
+    <div><h2>{ d.DisplayName }</h2><p class="biography">{ d.Biography }</p>
+     if d.Location != "" {
+      <p class="eyebrow">{ d.Location }</p>
+     }
+    </div>
+   </section>
+  }
+  @Services(d)
+  if len(d.Contacts) > 0 {
+   <section class="contact" id="contact" aria-label={ localize(d, "Contact") }>
+    <span class="eyebrow">{ localize(d, "Have a project in mind?") }</span>
+    <h2>{ localize(d, "Let’s make something memorable.") }</h2>
+    <div class="contact-links">
+     for _, c := range d.Contacts {
+      <a href={ templ.SafeURL(c.URL) } rel="noopener noreferrer">{ c.Label } <span aria-hidden="true">↗</span></a>
+     }
+    </div>
+   </section>
+  }
  </main>
+ <footer><span>{ d.DisplayName } · { localize(d, "Photography") }</span><a href="#top">{ localize(d, "Back to top") } ↑</a></footer>
+ </div>
  <dialog id="photo-viewer" aria-label={ localize(d, "Full-screen photograph") }>
   <div class="viewer-controls"><button type="button" data-close>{ localize(d, "Close") }</button><button type="button" data-previous aria-label={ localize(d, "Previous photograph") }>{ localize(d, "Previous") }</button><p aria-live="polite" data-position></p><button type="button" data-next aria-label={ localize(d, "Next photograph") }>{ localize(d, "Next") }</button></div>
   <img data-viewer-image alt=""/>
@@ -53,20 +90,21 @@ templ Page(d domain.Draft, images map[string]string, options ...Metadata) {
  </body>
  </html>
 }
-templ Profile(d domain.Draft, images map[string]string, sources map[string]string) {
+templ Profile(d domain.Draft) {
  <header class="intro">
-  if d.ProfilePhoto != "" {
-   <img class="profile" src={ images[d.ProfilePhoto] } srcset={ sources[d.ProfilePhoto] } sizes="140px" alt={ d.DisplayName }/>
-  }
-  <p>{ d.Specialization }</p>
+  <p class="eyebrow">{ d.Specialization }</p>
   <h1>{ d.DisplayName }</h1>
-  <p>{ d.Location }</p>
-  <p>{ d.Biography }</p>
+  <div class="hero-bottom">
+   <p class="location">{ d.Location }</p>
+   if len(d.Photos) > 0 {
+    <a class="work-link" href="#photographs">{ localize(d, "Explore selected work") } <span aria-hidden="true">↓</span></a>
+   }
+  </div>
  </header>
 }
 templ Cover(id string, images map[string]string, sources map[string]string) {
  if id != "" {
-  <img class="cover" src={ images[id] } srcset={ sources[id] } sizes="(max-width: 640px) 88vw, (max-width: 1280px) 90vw, 1152px" alt="" fetchpriority="high"/>
+  <img class="cover" src={ images[id] } srcset={ sources[id] } sizes="(max-width: 640px) 88vw, (max-width: 1600px) 90vw, 1440px" alt="" fetchpriority="high"/>
  }
 }
 templ Gallery(d domain.Draft, images map[string]string, sources map[string]string) {
@@ -85,14 +123,14 @@ templ Gallery(d domain.Draft, images map[string]string, sources map[string]strin
 }
 templ Services(d domain.Draft) {
  if len(d.Services) > 0 {
-  <section class="services" aria-label={ localize(d, "Services and pricing") }>
+  <section id="services" class="services" aria-label={ localize(d, "Services and pricing") }>
    <h2>{ localize(d, "Services") }</h2>
    for _, s := range d.Services {
     <article>
      <h3>{ s.Name }</h3>
      <p>{ s.Description }</p>
      if !d.HidePrices && s.Price != "" {
-      <p>{ s.Price }</p>
+      <p class="price">{ s.Price }</p>
      }
     </article>
    }

@@ -9,7 +9,7 @@ import (
 )
 
 func TestTemplatesRenderSavedContent(t *testing.T) {
-	for _, name := range []string{"gallery", "editorial"} {
+	for _, name := range []string{"gallery", "editorial", studioTemplate} {
 		d := domain.EmptyDraft()
 		d.Template = name
 		d.DisplayName = "<script>alert(1)</script>"
@@ -22,7 +22,7 @@ func TestTemplatesRenderSavedContent(t *testing.T) {
 			t.Fatal(err)
 		}
 		html := out.String()
-		for _, content := range []string{"&lt;script&gt;", "Portrait session", "People", "https://images.example/photo.jpg", `name="viewport"`} {
+		for _, content := range []string{"&lt;script&gt;", "Portrait session", "People", "https://images.example/photo.jpg", `name="viewport"`, "--paper: #faf9f6", `href="#photographs"`} {
 			if !strings.Contains(html, content) {
 				t.Errorf("%s missing %s", name, content)
 			}
@@ -31,7 +31,7 @@ func TestTemplatesRenderSavedContent(t *testing.T) {
 			t.Fatal("unsafe HTML or hidden price rendered")
 		}
 		intro, cover := strings.Index(html, `<header class="intro">`), strings.Index(html, `<img class="cover"`)
-		if (name == "editorial") != (cover < intro) {
+		if intro < 0 || cover < intro {
 			t.Fatal("incorrect template section order")
 		}
 	}
@@ -39,7 +39,7 @@ func TestTemplatesRenderSavedContent(t *testing.T) {
 
 func TestPortfolioLanguage(t *testing.T) {
 	for _, language := range []string{"", "en", "ru"} {
-		for _, template := range []string{"gallery", "editorial"} {
+		for _, template := range []string{"gallery", "editorial", studioTemplate} {
 			t.Run(language+"/"+template, func(t *testing.T) {
 				d := domain.EmptyDraft()
 				d.Language = language

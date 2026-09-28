@@ -85,7 +85,7 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
             </fieldset>
             <fieldset disabled={busy}>
                 <legend>{t("Appearance")}</legend>
-                <label>{t("Template")}<select value={draft.template} onChange={e => change({template: e.target.value as Draft["template"]})}><option value="gallery">{t("Gallery — centered introduction")}</option><option value="editorial">{t("Editorial — cover first, larger photographs")}</option></select></label>
+                <label>{t("Template")}<select value={draft.template} onChange={e => change({template: e.target.value as Draft["template"]})}><option value="gallery">{t("Gallery — fine-art exhibition")}</option><option value="editorial">{t("Editorial — cinematic photo essay")}</option><option value="studio">{t("Studio — playful, graphic posters")}</option></select></label>
                 <label>{t("Typography")}<select value={draft.typography} onChange={e => change({typography: e.target.value as Draft["typography"]})}><option value="serif">{t("Classic serif")}</option><option value="sans">{t("Modern sans serif")}</option></select></label>
                 <label>{t("Colour scheme")}<select value={draft.colour} onChange={e => change({colour: e.target.value as Draft["colour"]})}><option value="light">{t("Light")}</option><option value="dark">{t("Dark")}</option><option value="warm">{t("Warm")}</option></select></label>
                 <label>{t("Photo layout")}<select value={draft.layout} onChange={e => change({layout: e.target.value as Draft["layout"]})}><option value="grid">{t("Grid")}</option><option value="column">{t("Single column")}</option></select></label>
