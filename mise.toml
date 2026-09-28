@@ -68,11 +68,12 @@ outputs = [ "backend/api/server/publicapi/*_gen.go" ]
 
 [tasks."backend:templates"]
 dir = "backend"
+depends = [ "backend:modules" ]
 run = "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate"
 
 [tasks."backend:build"]
 dir = "backend"
-depends = [ "backend:generate", "backend:templates", "backend:modules", "web:build" ]
+depends = [ "backend:generate", "backend:templates", "web:build" ]
 run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
     "go.*",
@@ -90,13 +91,14 @@ run = "pnpm install --frozen-lockfile"
 
 [tasks."web:generate"]
 dir = "web"
+depends = [ "web:modules" ]
 run = "pnpm run generate"
 sources = [ "api/publicapi.yml" ]
 outputs = [ "src/api/schema.d.ts" ]
 
 [tasks."web:build"]
 dir = "web"
-depends = [ "web:modules", "web:generate" ]
+depends = [ "web:generate" ]
 run = "pnpm run build"
 
 # Checks
