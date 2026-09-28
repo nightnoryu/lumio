@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: lumio-migrate
+  labels:
+    app.kubernetes.io/component: migration
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app: lumio-migrate
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: lumio-web
+          args: [migrate]
+          envFrom:
+            - configMapRef:
+                name: lumio-config
+          env:
+            - name: LUMIO_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lumio-secrets
+                  key: LUMIO_DB_PASSWORD
+            - name: LUMIO_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lumio-secrets
+                  key: LUMIO_S3_ACCESS_KEY
+            - name: LUMIO_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lumio-secrets
+                  key: LUMIO_S3_SECRET_KEY
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]

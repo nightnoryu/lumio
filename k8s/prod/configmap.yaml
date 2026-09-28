@@ -2,9 +2,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: lumio-config
+  labels:
+    app.kubernetes.io/component: prerequisite
 data:
   LUMIO_BASE_DOMAIN: "lumio.ru"
-  LUMIO_DASHBOARD_ORIGIN: "app.lumio.ru"
+  LUMIO_DASHBOARD_ORIGIN: "https://app.lumio.ru"
   LUMIO_SERVE_REST_ADDRESS: ":8080"
   LUMIO_METRICS_ADDRESS: ":9090"
   LUMIO_DB_HOST: "postgres"

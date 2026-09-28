@@ -13,6 +13,16 @@ resources:
 generators:
   - secret-generator.yaml
 
+patches:
+  - target:
+      kind: Secret
+      name: lumio-secrets
+    patch: |-
+      - op: add
+        path: /metadata/labels
+        value:
+          app.kubernetes.io/component: prerequisite
+
 images:
   - name: lumio-web
     newName: ghcr.io/nightnoryu/lumio

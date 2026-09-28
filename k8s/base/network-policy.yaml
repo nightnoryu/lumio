@@ -41,7 +41,7 @@ spec:
             matchExpressions:
               - key: app
                 operator: In
-                values: [lumio-web, lumio-worker]
+                values: [lumio-web, lumio-worker, lumio-migrate]
       ports:
         - port: 5432
 ---

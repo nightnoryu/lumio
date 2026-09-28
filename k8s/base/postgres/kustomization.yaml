@@ -5,3 +5,8 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/component: prerequisite
