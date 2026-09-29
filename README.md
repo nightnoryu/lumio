@@ -29,7 +29,8 @@ TODO
 - [Development](docs/development.md) — local setup, commands, and test workflows
 - [Configuration](docs/configuration.md) — runtime settings and environment variables
 - [Architecture](docs/architecture.md) — code structure and system boundaries
-- [Pilot operations](docs/pilot-operations.md) — invitations, accounts, and password recovery
+- [Pilot operations](docs/pilot-operations.md) — invitations, accounts, and
+  password recovery
 - [Changelog](CHANGELOG.md)
 
 ## ⚒️ Local development
@@ -40,4 +41,5 @@ TODO
 
 Distributed under the MIT License. See [License](/LICENSE) for more information.
 
-Production manifests and the deployment/restore runbook: [k3s deployment](docs/deployment.md).
+Production manifests and the deployment/restore runbook:
+[k3s deployment](docs/deployment.md).

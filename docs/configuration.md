@@ -20,8 +20,9 @@ root. Compose creates a private `lumio` bucket and configures one-day expiry for
 
 ## Standalone executable
 
-After `mise run build`, the executable needs PostgreSQL, initialized S3 storage, and environment
-configuration, but no Node.js process or frontend files:
+After `mise run build`, the executable needs PostgreSQL, initialized S3
+storage, and environment configuration, but no Node.js process or frontend
+files:
 
 ```sh
 LUMIO_DB_HOST=localhost \
@@ -43,8 +44,8 @@ SIGINT and SIGTERM allow up to 10 seconds for active requests to finish.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LUMIO_DASHBOARD_ORIGIN` | `http://localhost:3000` | Exact dashboard origin; HTTPS required except on localhost |
-| `LUMIO_BASE_DOMAIN` | `localhost` | Portfolio base domain; production dashboard must use `app.<base domain>` |
+| `LUMIO_DASHBOARD_ORIGIN` | `http://localhost:3000` | Dashboard origin; HTTPS except localhost |
+| `LUMIO_BASE_DOMAIN` | `localhost` | Portfolio domain; production uses `app.<base domain>` |
 | `LUMIO_SERVE_REST_ADDRESS` | `:8080` | HTTP listen address |
 | `LUMIO_LOG_LEVEL` | `info` | Structured JSON log level |
 | `LUMIO_DB_HOST` | required | PostgreSQL host |
@@ -53,7 +54,7 @@ SIGINT and SIGTERM allow up to 10 seconds for active requests to finish.
 | `LUMIO_DB_USER` | required | Database user |
 | `LUMIO_DB_PASSWORD` | required | Database password |
 | `LUMIO_DB_MAX_CONN` | `10` | Maximum open and idle connections |
-| `LUMIO_DB_CONN_LIFETIME` | `60s` | Maximum connection lifetime; Go duration syntax |
+| `LUMIO_DB_CONN_LIFETIME` | `60s` | Maximum connection lifetime (Go duration) |
 
 Missing or invalid settings fail startup. Configure local-only MinIO credentials
 through the `.env` variables described above.
@@ -62,14 +63,14 @@ through the `.env` variables described above.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LUMIO_S3_ENDPOINT` | `http://localhost:9000` | Server/worker S3 endpoint, path-style addressing |
-| `LUMIO_S3_PUBLIC_ENDPOINT` | `http://localhost:9000` | Browser-reachable S3 endpoint for signatures; HTTPS with an HTTPS dashboard |
+| `LUMIO_S3_ENDPOINT` | `http://localhost:9000` | Server/worker S3 endpoint; path-style |
+| `LUMIO_S3_PUBLIC_ENDPOINT` | `http://localhost:9000` | Browser S3 endpoint; use HTTPS with an HTTPS dashboard |
 | `LUMIO_S3_REGION` | `us-east-1` | Signing region |
 | `LUMIO_S3_BUCKET` | `lumio` | Private media bucket |
 | `LUMIO_S3_ACCESS_KEY` | `lumio-local` | S3 key; replace outside development |
-| `LUMIO_S3_SECRET_KEY` | `lumio-local-only` | S3 secret; replace outside development |
-| `LUMIO_MEDIA_FILE_BYTES` | `52428800` | Maximum original size (50 MiB; configurable up to 500 MiB) |
-| `LUMIO_MEDIA_STORAGE_BYTES` | `2147483648` | Original storage reservation per site (2 GiB) |
+| `LUMIO_S3_SECRET_KEY` | `lumio-local-only` | S3 secret; replace outside dev |
+| `LUMIO_MEDIA_FILE_BYTES` | `52428800` | Max original size (50 MiB; up to 500 MiB) |
+| `LUMIO_MEDIA_STORAGE_BYTES` | `2147483648` | Original storage per site (2 GiB) |
 | `LUMIO_MEDIA_PHOTOS` | `100` | Photo reservations per site |
 
 Run `lumio worker` as a separate process with the same database/storage settings.
@@ -146,9 +147,9 @@ addresses. Without trusted proxies, clients behind ingress share its IP limit.
 `LUMIO_METRICS_ADDRESS` defaults to `127.0.0.1:9090`; an empty value disables it.
 The web process and worker each serve a private Prometheus registry at `/metrics`
 on this separate listener. Set distinct ports when running both on one host.
-Compose uses `0.0.0.0:9090` within each container without publishing it or routing it
-through Traefik. Scrape both processes over the private network; do not expose this
-listener through public ingress. Runtime/process metrics accompany
+Compose uses `0.0.0.0:9090` within each container without publishing it or
+routing it through Traefik. Scrape both processes over the private network;
+do not expose this listener through public ingress. Runtime/process metrics accompany
 `lumio_http_requests_total`, `lumio_http_request_duration_seconds`,
 `lumio_media_operations_total` and `lumio_media_operation_duration_seconds`.
 Media operations are `upload_create`, `upload_complete`, `process`, and `cleanup`;

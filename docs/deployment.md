@@ -14,7 +14,7 @@ templates and the React bundle before compiling the embedded Go executable:
 docker build --target web -t ghcr.io/nightnoryu/lumio:VERSION .
 docker build --target worker -t ghcr.io/nightnoryu/lumio-worker:VERSION .
 # Install sops, age and ksops; provide the matching age private key via SOPS_AGE_KEY_FILE.
-# Replace encrypted placeholders with independent random credentials; then set image tags.
+# Replace placeholders with independent random credentials, then set image tags.
 sops k8s/prod/secret.enc.yaml
 umask 077
 kustomize build --enable-alpha-plugins --enable-exec k8s/prod > /tmp/lumio-rendered.yaml
@@ -121,9 +121,10 @@ Web has database readiness and process liveness probes. Worker probes check its
 private metrics listener, which starts after database/storage verification;
 they do not detect a stalled job. Both emit JSON logs. Recreate web updates
 avoid mixed frontend asset versions and cause brief downtime. Keep one replica
-until shared asset retention is implemented. Web has one CPU and 1 GiB memory to accommodate concurrent Argon2 password
-checks. Authentication work has no global concurrency bound; monitor memory
-and tune limits if pilot traffic grows. Worker has two CPUs, 1 GiB memory,
+until shared asset retention is implemented. Web has one CPU and 1 GiB memory
+to accommodate concurrent Argon2 password checks. Authentication work has no
+global concurrency bound; monitor memory and tune limits if pilot traffic grows.
+Worker has two CPUs, 1 GiB memory,
 and bounded temporary disk; tune against real image workloads.
 
 If Prometheus Operator is installed, use the separate `k8s/monitoring` overlay.

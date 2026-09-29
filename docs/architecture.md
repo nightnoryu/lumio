@@ -29,8 +29,9 @@ schema is generated with `openapi-typescript` and consumed through
 ## Database
 
 The schema uses singular table names: `user`, `session`, `site`, `invitation`,
-`password_reset`, `photo`, `site_draft`, `site_revision`, and go-kita's `schema_migration`. Timestamped up/down
-migrations live in `backend/data/migrations/`; only up migrations run
+`password_reset`, `photo`, `site_draft`, `site_revision`, and go-kita's
+`schema_migration`. Timestamped up/down migrations live in
+`backend/data/migrations/`; only up migrations run
 automatically. Add new migrations rather than editing applied ones.
 
 ## Portfolio drafts and rendering

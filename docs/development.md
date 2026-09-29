@@ -9,9 +9,10 @@ mise install
 mise run dev
 ```
 
-Open **http://localhost:3000**. Traefik routes `/api/*`, `/healthz`,
-`/livez`, `/preview/*` and `/portfolio.js` to Go; Vite serves the dashboard and hot reloads frontend edits over
-the same origin. Go changes need `mise run dev:reload`. Ports 3000, 5432,
+Open **[http://localhost:3000](http://localhost:3000)**. Traefik routes
+`/api/*`, `/healthz`, `/livez`, `/preview/*` and `/portfolio.js` to Go; Vite
+serves the dashboard and hot reloads frontend edits over the same origin. Go
+changes need `mise run dev:reload`. Ports 3000, 5432,
 9000, and 9001 must be free.
 
 ## Common commands
@@ -127,8 +128,10 @@ search and sharing metadata; the cover or first gallery image supplies the share
 
 Compose routes `http://<slug>.localhost:3000/` to Go. Browsers normally resolve
 `*.localhost` to loopback. If your resolver does not, add the chosen subdomain to
-`/etc/hosts` or use `curl --resolve anna.localhost:3000:127.0.0.1 http://anna.localhost:3000/`. After the route configuration changes, recreate the
-service with `docker compose up -d lumio` after building the executable.
+`/etc/hosts` or use:
+`curl --resolve anna.localhost:3000:127.0.0.1 http://anna.localhost:3000/`.
+After route configuration changes, recreate the service with
+`docker compose up -d lumio` after building the executable.
 
 Visitors can open a photograph in the full-screen viewer, use Previous/Next or
 arrow keys, and close with Escape. Keyboard focus returns to the opened photograph.
