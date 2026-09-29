@@ -42,36 +42,36 @@ SIGINT and SIGTERM allow up to 10 seconds for active requests to finish.
 
 ## Environment variables
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `LUMIO_DASHBOARD_ORIGIN` | `http://localhost:3000` | Dashboard origin; HTTPS except localhost |
-| `LUMIO_BASE_DOMAIN` | `localhost` | Portfolio domain; production uses `app.<base domain>` |
-| `LUMIO_SERVE_REST_ADDRESS` | `:8080` | HTTP listen address |
-| `LUMIO_LOG_LEVEL` | `info` | Structured JSON log level |
-| `LUMIO_DB_HOST` | required | PostgreSQL host |
-| `LUMIO_DB_PORT` | `5432` | PostgreSQL port |
-| `LUMIO_DB_NAME` | required | Database name |
-| `LUMIO_DB_USER` | required | Database user |
-| `LUMIO_DB_PASSWORD` | required | Database password |
-| `LUMIO_DB_MAX_CONN` | `10` | Maximum open and idle connections |
-| `LUMIO_DB_CONN_LIFETIME` | `60s` | Maximum connection lifetime (Go duration) |
+| Variable                   | Default                 | Meaning                                               |
+|----------------------------|-------------------------|-------------------------------------------------------|
+| `LUMIO_DASHBOARD_ORIGIN`   | `http://localhost:3000` | Dashboard origin; HTTPS except localhost              |
+| `LUMIO_BASE_DOMAIN`        | `localhost`             | Portfolio domain; production uses `app.<base domain>` |
+| `LUMIO_SERVE_REST_ADDRESS` | `:8080`                 | HTTP listen address                                   |
+| `LUMIO_LOG_LEVEL`          | `info`                  | Structured JSON log level                             |
+| `LUMIO_DB_HOST`            | required                | PostgreSQL host                                       |
+| `LUMIO_DB_PORT`            | `5432`                  | PostgreSQL port                                       |
+| `LUMIO_DB_NAME`            | required                | Database name                                         |
+| `LUMIO_DB_USER`            | required                | Database user                                         |
+| `LUMIO_DB_PASSWORD`        | required                | Database password                                     |
+| `LUMIO_DB_MAX_CONN`        | `10`                    | Maximum open and idle connections                     |
+| `LUMIO_DB_CONN_LIFETIME`   | `60s`                   | Maximum connection lifetime (Go duration)             |
 
 Missing or invalid settings fail startup. Configure local-only MinIO credentials
 through the `.env` variables described above.
 
 ## Media storage and worker
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `LUMIO_S3_ENDPOINT` | `http://localhost:9000` | Server/worker S3 endpoint; path-style |
-| `LUMIO_S3_PUBLIC_ENDPOINT` | `http://localhost:9000` | Browser S3 endpoint; use HTTPS with an HTTPS dashboard |
-| `LUMIO_S3_REGION` | `us-east-1` | Signing region |
-| `LUMIO_S3_BUCKET` | `lumio` | Private media bucket |
-| `LUMIO_S3_ACCESS_KEY` | `lumio-local` | S3 key; replace outside development |
-| `LUMIO_S3_SECRET_KEY` | `lumio-local-only` | S3 secret; replace outside dev |
-| `LUMIO_MEDIA_FILE_BYTES` | `52428800` | Max original size (50 MiB; up to 500 MiB) |
-| `LUMIO_MEDIA_STORAGE_BYTES` | `2147483648` | Original storage per site (2 GiB) |
-| `LUMIO_MEDIA_PHOTOS` | `100` | Photo reservations per site |
+| Variable                    | Default                 | Meaning                                                |
+|-----------------------------|-------------------------|--------------------------------------------------------|
+| `LUMIO_S3_ENDPOINT`         | `http://localhost:9000` | Server/worker S3 endpoint; path-style                  |
+| `LUMIO_S3_PUBLIC_ENDPOINT`  | `http://localhost:9000` | Browser S3 endpoint; use HTTPS with an HTTPS dashboard |
+| `LUMIO_S3_REGION`           | `us-east-1`             | Signing region                                         |
+| `LUMIO_S3_BUCKET`           | `lumio`                 | Private media bucket                                   |
+| `LUMIO_S3_ACCESS_KEY`       | `lumio-local`           | S3 key; replace outside development                    |
+| `LUMIO_S3_SECRET_KEY`       | `lumio-local-only`      | S3 secret; replace outside dev                         |
+| `LUMIO_MEDIA_FILE_BYTES`    | `52428800`              | Max original size (50 MiB; up to 500 MiB)              |
+| `LUMIO_MEDIA_STORAGE_BYTES` | `2147483648`            | Original storage per site (2 GiB)                      |
+| `LUMIO_MEDIA_PHOTOS`        | `100`                   | Photo reservations per site                            |
 
 Run `lumio worker` as a separate process with the same database/storage settings.
 The worker image supplies libvips 8.17, fonts, a 1 GiB Compose memory limit and

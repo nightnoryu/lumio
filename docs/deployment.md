@@ -16,11 +16,9 @@ docker build --target worker -t ghcr.io/nightnoryu/lumio-worker:VERSION .
 # Install sops, age and ksops; provide the matching age private key via SOPS_AGE_KEY_FILE.
 # Replace placeholders with independent random credentials, then set image tags.
 sops k8s/prod/secret.enc.yaml
-umask 077
 kustomize build --enable-alpha-plugins --enable-exec k8s/prod > /tmp/lumio-rendered.yaml
 ```
 
-Use a private output directory and `umask 077` before rendering real secrets.
 Rendered YAML contains plaintext-equivalent secrets. Production uses the same
 KSOPS generator as `anon3anon`: `secret-generator.yaml` decrypts the committed
 `secret.enc.yaml` into `lumio-secrets`. `.sops.yaml` uses the same public age

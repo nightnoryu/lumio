@@ -18,28 +18,32 @@ portfolio, showcase selected work, and share it through a personal website.
 
 ## ✨ Features
 
-TODO
+- Upload JPEG, PNG, or WebP photographs and organize them in a portfolio.
+- Add a biography, services, prices, and contact links.
+- Choose a Gallery, Editorial, or Studio layout and preview drafts before
+  publishing.
+- Publish a responsive portfolio on a personal subdomain.
+- Manage access with invitations and recover passwords through an operator.
 
 ## 📸 Screenshots
 
-TODO
+| Gallery                                            | Editorial                                              |
+|----------------------------------------------------|--------------------------------------------------------|
+| ![Gallery portfolio](docs/screenshots/gallery.png) | ![Editorial portfolio](docs/screenshots/editorial.png) |
+
+| Studio                                           | Portfolio editor                                 |
+|--------------------------------------------------|--------------------------------------------------|
+| ![Studio portfolio](docs/screenshots/studio.png) | ![Portfolio editor](docs/screenshots/editor.png) |
+
+See [photo credits and screenshot licenses](docs/screenshots/CREDITS.md).
 
 ## 📚 Documentation
 
-- [Development](docs/development.md) — local setup, commands, and test workflows
-- [Configuration](docs/configuration.md) — runtime settings and environment variables
-- [Architecture](docs/architecture.md) — code structure and system boundaries
-- [Pilot operations](docs/pilot-operations.md) — invitations, accounts, and
-  password recovery
+- [Architecture](docs/architecture.md), [configuration](docs/configuration.md),
+  [development](docs/development.md)
+- [Deployment](docs/deployment.md) and [pilot operations](docs/pilot-operations.md)
 - [Changelog](CHANGELOG.md)
-
-## ⚒️ Local development
-
-TODO
 
 ## 📜 License
 
-Distributed under the MIT License. See [License](/LICENSE) for more information.
-
-Production manifests and the deployment/restore runbook:
-[k3s deployment](docs/deployment.md).
+Distributed under the MIT License. See [License](/LICENSE) for details.

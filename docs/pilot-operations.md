@@ -10,8 +10,8 @@ docker compose exec lumio /app/bin/lumio invite anna@example.com
 
 Give the printed code to that photographer privately. They can choose **Have
 an invitation? Create an account**, enter the same email, and set a password
-of 12–128 bytes. Codes are consumed atomically on successful registration. The
-server stores token hashes, never the raw invitation or session tokens.
+of 12 to 128 bytes. Codes are consumed atomically on successful registration.
+The server stores token hashes, never the raw invitation or session tokens.
 
 Accounts use Argon2id (64 MiB, three iterations) and seven-day database
 sessions. Cookies always use `__Host-lumio-session`, `Secure`, `HttpOnly`,
