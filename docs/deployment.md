@@ -13,20 +13,22 @@ templates and the React bundle before compiling the embedded Go executable:
 ```sh
 docker build --target web -t ghcr.io/nightnoryu/lumio:VERSION .
 docker build --target worker -t ghcr.io/nightnoryu/lumio-worker:VERSION .
-# Install sops, age and ksops; provide the matching age private key via SOPS_AGE_KEY_FILE.
+# Install sops, age and ksops; provide the matching age private key via
+# SOPS_AGE_KEY_FILE.
 # Replace placeholders with independent random credentials, then set image tags.
 sops k8s/prod/secret.enc.yaml
-kustomize build --enable-alpha-plugins --enable-exec k8s/prod > /tmp/lumio-rendered.yaml
+kustomize build --enable-alpha-plugins --enable-exec k8s/prod \
+  > /tmp/lumio-rendered.yaml
 ```
 
 Rendered YAML contains plaintext-equivalent secrets. Production uses the same
 KSOPS generator as `anon3anon`: `secret-generator.yaml` decrypts the committed
 `secret.enc.yaml` into `lumio-secrets`. `.sops.yaml` uses the same public age
-recipient as that repository and encrypts only `data`/`stringData`. The encrypted
-file initially contains placeholders, which must be replaced before deployment.
-Never commit a decrypted Secret or private key. If changing recipients, update
-`.sops.yaml` and run `sops updatekeys k8s/prod/secret.enc.yaml` while the existing
-private key is available.
+recipient as that repository and encrypts only `data`/`stringData`. The
+encrypted file initially contains placeholders, which must be replaced before
+deployment. Never commit a decrypted Secret or private key. If changing
+recipients, update `.sops.yaml` and run `sops updatekeys
+k8s/prod/secret.enc.yaml` while the existing private key is available.
 
 The generated Secret has a stable name. After changing it, restart web, worker
 and the affected data-service Deployments so their environment is refreshed.
@@ -41,21 +43,23 @@ pinning upstream image digests and an immutable Alpine package mirror.
 
 ## Cluster prerequisites
 
-Use k3s with the `local-path` StorageClass, its network-policy controller enabled,
-Traefik v3 and its Middleware CRD. PostgreSQL and MinIO each have one Recreate
-Deployment and a persistent claim. This is a single-node pilot setup, with no
-replication or protection against losing that node. Keep the PVCs when upgrading.
-The MinIO community image matches local development and runs as root to write
-its data volume. The application uses a separate restricted MinIO account.
+Use k3s with the `local-path` StorageClass, its network-policy controller
+enabled, Traefik v3 and its Middleware CRD. PostgreSQL and MinIO each have one
+Recreate Deployment and a persistent claim. This is a single-node pilot setup,
+with no replication or protection against losing that node. Keep the PVCs when
+upgrading. The MinIO community image matches local development and runs as root
+to write its data volume. The application uses a separate restricted MinIO
+account.
 
 Configure Traefik only in `../ansible-k3s`: the role there supports DNS-01 with
 an existing provider-credential Secret, staging/production ACME files, one
 replica, Recreate updates and protected persistent certificate storage. Follow
 that repo's `docs/configuration.md`. Create DNS-only A records for `lumio.ru`
-and `*.lumio.ru` to the ingress IP. Add AAAA only for working IPv6. Issue against
-staging first, then switch to production. The Ingress explicitly requests one
-apex + wildcard certificate; new photographer subdomains need no new resources.
-Traefik's [Ingress TLS annotations](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress/)
+and `*.lumio.ru` to the ingress IP. Add AAAA only for working IPv6. Issue
+against staging first, then switch to production. The Ingress explicitly
+requests one apex + wildcard certificate; new photographer subdomains need no
+new resources. Traefik's
+[Ingress TLS annotations](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress/)
 select the resolver and certificate domains.
 
 Check the pod CIDR in `config.env` and Traefik labels in the NetworkPolicies.
@@ -72,7 +76,8 @@ Run this sequence only when deployment is authorized:
 1. Configure DNS and Traefik as above. Ensure registry images are readable by
    the cluster; add an imagePullSecret to the pod specs for private images.
 2. Render the production overlay. Create its Namespace, generated ConfigMap and
-   Secret, PVCs, PostgreSQL/MinIO Deployments, Services and NetworkPolicies first.
+   Secret, PVCs, PostgreSQL/MinIO Deployments, Services and NetworkPolicies
+   first.
    Wait for both data services to become ready. Do not start web/worker yet.
 3. Provision the dedicated private bucket and application account below.
 4. Run the `Apply Kubernetes Manifests` workflow or apply the migration Job
@@ -95,7 +100,8 @@ admin API is routed). In a separate terminal, use
 client, set a local alias using the root credentials from your secret store:
 
 ```sh
-mc alias set lumio-admin http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+mc alias set lumio-admin http://127.0.0.1:9000 \
+  "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
 mc mb --ignore-existing lumio-admin/lumio
 mc anonymous set none lumio-admin/lumio
 mc ilm import lumio-admin/lumio < k8s/prod/storage-lifecycle.json
@@ -142,7 +148,8 @@ Before inviting users, verify:
   database records and the same certificate survive.
 - Unauthorized pods cannot reach database/web ports; each client's rate limit
   uses its own IP. Logs contain no signed URLs or authentication tokens.
-- Metrics are scraped and a controlled failing job triggers the configured alert.
+- Metrics are scraped and a controlled failing job triggers the configured
+  alert.
 
 ## Manual backup and restore
 
@@ -152,7 +159,8 @@ through the database dump and object copy so both snapshots represent the same
 state. Using local port forwards and credentials from your secret store:
 
 ```sh
-pg_dump --host=127.0.0.1 --username=lumio --dbname=lumio --format=custom --file=lumio.dump
+pg_dump --host=127.0.0.1 --username=lumio --dbname=lumio \
+  --format=custom --file=lumio.dump
 mc mirror lumio-admin/lumio /secure-backup/lumio-objects
 ```
 

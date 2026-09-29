@@ -27,13 +27,21 @@ portfolio, showcase selected work, and share it through a personal website.
 
 ## 📸 Screenshots
 
+<!-- markdownlint-disable MD013 -->
+
 | Gallery                                            | Editorial                                              |
 |----------------------------------------------------|--------------------------------------------------------|
 | ![Gallery portfolio](docs/screenshots/gallery.png) | ![Editorial portfolio](docs/screenshots/editorial.png) |
 
+<!-- markdownlint-enable MD013 -->
+
+<!-- markdownlint-disable MD013 -->
+
 | Studio                                           | Portfolio editor                                 |
 |--------------------------------------------------|--------------------------------------------------|
 | ![Studio portfolio](docs/screenshots/studio.png) | ![Portfolio editor](docs/screenshots/editor.png) |
+
+<!-- markdownlint-enable MD013 -->
 
 See [photo credits and screenshot licenses](docs/screenshots/CREDITS.md).
 
@@ -41,7 +49,8 @@ See [photo credits and screenshot licenses](docs/screenshots/CREDITS.md).
 
 - [Architecture](docs/architecture.md), [configuration](docs/configuration.md),
   [development](docs/development.md)
-- [Deployment](docs/deployment.md) and [pilot operations](docs/pilot-operations.md)
+- [Deployment](docs/deployment.md) and
+  [pilot operations](docs/pilot-operations.md)
 - [Changelog](CHANGELOG.md)
 
 ## 📜 License
