@@ -1,4 +1,5 @@
 openapi: 3.0.3
+
 info:
   title: Lumio public API
   version: 0.3.0
@@ -22,11 +23,13 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status]
+                required:
+                  - status
                 properties:
                   status:
                     type: string
-                    enum: [ok]
+                    enum:
+                      - ok
         default:
           $ref: '#/components/responses/Error'
 
@@ -134,7 +137,9 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Success
@@ -150,7 +155,9 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -174,38 +181,42 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Photos"
+                $ref: '#/components/schemas/Photos'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     post:
       operationId: createUpload
       parameters:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UploadInput"
+              $ref: '#/components/schemas/UploadInput'
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Upload"
+                $ref: '#/components/schemas/Upload'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
 
   /api/sites/{id}/photos/{photoId}:
     delete:
@@ -214,16 +225,20 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
         - name: photoId
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       responses:
-        "204":
+        '204':
           description: Success
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
 
   /api/sites/{id}/photos/{photoId}/complete:
     post:
@@ -232,16 +247,20 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
         - name: photoId
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       responses:
-        "204":
+        '204':
           description: Success
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
 
   /api/sites/{id}/photos/{photoId}/preview:
     get:
@@ -250,20 +269,24 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
         - name: photoId
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Preview"
+                $ref: '#/components/schemas/Preview'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
 
   /api/sites/{id}/draft:
     get:
@@ -272,13 +295,16 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Private draft
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Draft'}
+              schema:
+                $ref: '#/components/schemas/Draft'
         default:
           $ref: '#/components/responses/Error'
     put:
@@ -287,18 +313,22 @@ paths:
         - name: id
           in: path
           required: true
-          schema: {type: string, format: uuid}
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/Draft'}
+            schema:
+              $ref: '#/components/schemas/Draft'
       responses:
         '200':
           description: Private draft
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Draft'}
+              schema:
+                $ref: '#/components/schemas/Draft'
         default:
           $ref: '#/components/responses/Error'
 
@@ -307,7 +337,9 @@ paths:
       - name: id
         in: path
         required: true
-        schema: {type: string, format: uuid}
+        schema:
+          type: string
+          format: uuid
     get:
       operationId: getPublication
       responses:
@@ -315,7 +347,8 @@ paths:
           description: Publication state and canonical URL
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Publication'}
+              schema:
+                $ref: '#/components/schemas/Publication'
         default:
           $ref: '#/components/responses/Error'
     post:
@@ -326,15 +359,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [version]
+              required:
+                - version
               properties:
-                version: {type: integer, format: int64, minimum: 1}
+                version:
+                  type: integer
+                  format: int64
+                  minimum: 1
       responses:
         '200':
           description: Published saved draft
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Publication'}
+              schema:
+                $ref: '#/components/schemas/Publication'
         default:
           $ref: '#/components/responses/Error'
     delete:
@@ -357,54 +395,101 @@ components:
   schemas:
     Error:
       type: object
-      required: [message]
+      required:
+        - message
       properties:
-        message: {type: string}
+        message:
+          type: string
 
     Credentials:
       type: object
-      required: [email, password]
+      required:
+        - email
+        - password
       properties:
-        email: {type: string, maxLength: 254}
-        password: {type: string, minLength: 12, maxLength: 128}
+        email:
+          type: string
+          maxLength: 254
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
 
     Registration:
       type: object
-      required: [email, password, invitation]
+      required:
+        - email
+        - password
+        - invitation
       properties:
-        email: {type: string, maxLength: 254}
-        password: {type: string, minLength: 12, maxLength: 128}
-        invitation: {type: string, minLength: 26, maxLength: 26}
+        email:
+          type: string
+          maxLength: 254
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+        invitation:
+          type: string
+          minLength: 26
+          maxLength: 26
 
     PasswordReset:
       type: object
-      required: [token, password]
+      required:
+        - token
+        - password
       properties:
-        token: {type: string, minLength: 26, maxLength: 26}
-        password: {type: string, minLength: 12, maxLength: 128}
+        token:
+          type: string
+          minLength: 26
+          maxLength: 26
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
 
     Viewer:
       type: object
-      required: [id, email, csrfToken, baseDomain]
+      required:
+        - id
+        - email
+        - csrfToken
+        - baseDomain
       properties:
-        id: {type: string}
-        email: {type: string}
-        csrfToken: {type: string}
-        baseDomain: {type: string}
+        id:
+          type: string
+        email:
+          type: string
+        csrfToken:
+          type: string
+        baseDomain:
+          type: string
 
     SiteInput:
       type: object
-      required: [slug]
+      required:
+        - slug
       properties:
-        slug: {type: string, minLength: 1, maxLength: 100}
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 100
 
     Site:
       type: object
-      required: [id, slug, createdAt]
+      required:
+        - id
+        - slug
+        - createdAt
       properties:
-        id: {type: string}
-        slug: {type: string}
-        createdAt: {type: string, format: date-time}
+        id:
+          type: string
+        slug:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 
     Sites:
       type: array
@@ -413,27 +498,58 @@ components:
 
     UploadInput:
       type: object
-      required: [name, contentType, size, watermark]
+      required:
+        - name
+        - contentType
+        - size
+        - watermark
       properties:
-        name: {type: string, minLength: 1, maxLength: 255}
-        contentType: {type: string, enum: [image/jpeg, image/png, image/webp]}
-        size: {type: integer, format: int64, minimum: 1}
-        watermark: {type: string, maxLength: 80}
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contentType:
+          type: string
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+        size:
+          type: integer
+          format: int64
+          minimum: 1
+        watermark:
+          type: string
+          maxLength: 80
 
     Photo:
       type: object
-      required: [id, name, status, width, height, size]
+      required:
+        - id
+        - name
+        - status
+        - width
+        - height
+        - size
       properties:
-        id: {type: string}
-        name: {type: string}
-        status: {type: string}
-        width: {type: integer}
-        height: {type: integer}
-        size: {type: integer, format: int64}
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        size:
+          type: integer
+          format: int64
 
     Photos:
       type: array
-      items: {$ref: '#/components/schemas/Photo'}
+      items:
+        $ref: '#/components/schemas/Photo'
 
     Upload:
       description: |
@@ -442,76 +558,178 @@ components:
         Call complete after upload; a completed upload is verified, promoted to
         durable private storage, then queued for validation and processing.
       type: object
-      required: [id, url]
+      required:
+        - id
+        - url
       properties:
-        id: {type: string}
-        url: {type: string}
+        id:
+          type: string
+        url:
+          type: string
 
     Preview:
       type: object
-      required: [url]
+      required:
+        - url
       properties:
-        url: {type: string}
+        url:
+          type: string
 
     Draft:
       type: object
-      required: [version, displayName, biography, location, specialization, profilePhoto, coverPhoto, template, typography, colour, layout, photos, services, contacts, hidePrices]
+      required:
+        - version
+        - displayName
+        - biography
+        - location
+        - specialization
+        - profilePhoto
+        - coverPhoto
+        - template
+        - typography
+        - colour
+        - layout
+        - photos
+        - services
+        - contacts
+        - hidePrices
       properties:
-        version: {type: integer, format: int64, minimum: 0}
-        language: {type: string, enum: [en, ru], default: en}
-        seoTitle: {type: string, maxLength: 120}
-        seoDescription: {type: string, maxLength: 300}
-        displayName: {type: string, maxLength: 120}
-        biography: {type: string, maxLength: 4000}
-        location: {type: string, maxLength: 160}
-        specialization: {type: string, maxLength: 160}
-        profilePhoto: {type: string, maxLength: 36}
-        coverPhoto: {type: string, maxLength: 36}
-        template: {type: string, enum: [gallery, editorial, studio]}
-        typography: {type: string, enum: [serif, sans]}
-        colour: {type: string, enum: [light, dark, warm]}
-        layout: {type: string, enum: [grid, column]}
-        hidePrices: {type: boolean}
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        language:
+          type: string
+          enum:
+            - en
+            - ru
+          default: en
+        seoTitle:
+          type: string
+          maxLength: 120
+        seoDescription:
+          type: string
+          maxLength: 300
+        displayName:
+          type: string
+          maxLength: 120
+        biography:
+          type: string
+          maxLength: 4000
+        location:
+          type: string
+          maxLength: 160
+        specialization:
+          type: string
+          maxLength: 160
+        profilePhoto:
+          type: string
+          maxLength: 36
+        coverPhoto:
+          type: string
+          maxLength: 36
+        template:
+          type: string
+          enum:
+            - gallery
+            - editorial
+            - studio
+        typography:
+          type: string
+          enum:
+            - serif
+            - sans
+        colour:
+          type: string
+          enum:
+            - light
+            - dark
+            - warm
+        layout:
+          type: string
+          enum:
+            - grid
+            - column
+        hidePrices:
+          type: boolean
         photos:
           type: array
           maxItems: 100
-          items: {$ref: '#/components/schemas/DraftPhoto'}
+          items:
+            $ref: '#/components/schemas/DraftPhoto'
         services:
           type: array
           maxItems: 20
-          items: {$ref: '#/components/schemas/PortfolioService'}
+          items:
+            $ref: '#/components/schemas/PortfolioService'
         contacts:
           type: array
           maxItems: 12
-          items: {$ref: '#/components/schemas/Contact'}
+          items:
+            $ref: '#/components/schemas/Contact'
 
     DraftPhoto:
       type: object
-      required: [id, alt, category]
+      required:
+        - id
+        - alt
+        - category
       properties:
-        id: {type: string, format: uuid}
-        alt: {type: string, maxLength: 300}
-        category: {type: string, maxLength: 80}
+        id:
+          type: string
+          format: uuid
+        alt:
+          type: string
+          maxLength: 300
+        category:
+          type: string
+          maxLength: 80
 
     PortfolioService:
       type: object
-      required: [name, description, price]
+      required:
+        - name
+        - description
+        - price
       properties:
-        name: {type: string, minLength: 1, maxLength: 120}
-        description: {type: string, maxLength: 1000}
-        price: {type: string, maxLength: 100}
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+        price:
+          type: string
+          maxLength: 100
 
     Contact:
       type: object
-      required: [label, url]
+      required:
+        - label
+        - url
       properties:
-        label: {type: string, minLength: 1, maxLength: 60}
-        url: {type: string, minLength: 1, maxLength: 500}
+        label:
+          type: string
+          minLength: 1
+          maxLength: 60
+        url:
+          type: string
+          minLength: 1
+          maxLength: 500
 
     Publication:
       type: object
-      required: [published, version, url]
+      required:
+        - published
+        - version
+        - url
       properties:
-        published: {type: boolean}
-        version: {type: integer, format: int64, minimum: 0}
-        url: {type: string}
+        published:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        url:
+          type: string
