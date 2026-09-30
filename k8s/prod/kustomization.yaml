@@ -26,7 +26,7 @@ patches:
 images:
   - name: lumio-web
     newName: ghcr.io/nightnoryu/lumio
-    newTag: 0.1.0
+    newTag: 0.1.1
   - name: lumio-worker
     newName: ghcr.io/nightnoryu/lumio-worker
-    newTag: 0.1.0
+    newTag: 0.1.1
