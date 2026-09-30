@@ -6,13 +6,13 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: lumio.ru
-    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: '*.lumio.ru'
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: lumio.nightnoryu.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: '*.lumio.nightnoryu.com'
     traefik.ingress.kubernetes.io/router.middlewares: lumio-compress@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: 'lumio.ru'
+    - host: 'lumio.nightnoryu.com'
       http:
         paths:
           - path: /
@@ -22,7 +22,7 @@ spec:
                 name: lumio-web
                 port:
                   number: 8080
-    - host: 'app.lumio.ru'
+    - host: 'app.lumio.nightnoryu.com'
       http:
         paths:
           - path: /
@@ -32,7 +32,7 @@ spec:
                 name: lumio-web
                 port:
                   number: 8080
-    - host: '*.lumio.ru'
+    - host: '*.lumio.nightnoryu.com'
       http:
         paths:
           - path: /

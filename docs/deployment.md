@@ -1,10 +1,5 @@
 # k3s deployment
 
-These files are prepared for deployment; nothing has been applied or tested on
-a cluster. Production uses `lumio.ru`, `app.lumio.ru`, and `s3.lumio.ru`.
-The DNS provider, public ingress IP, release image tags and secrets must be
-supplied by the operator. The base/production layout follows `anon3anon/k8s`.
-
 ## Build and render without deploying
 
 Build from the repository root. The multi-stage Dockerfile generates API code,

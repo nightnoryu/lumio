@@ -5,8 +5,8 @@ metadata:
   labels:
     app.kubernetes.io/component: prerequisite
 data:
-  LUMIO_BASE_DOMAIN: "lumio.ru"
-  LUMIO_DASHBOARD_ORIGIN: "https://app.lumio.ru"
+  LUMIO_BASE_DOMAIN: "lumio.nightnoryu.com"
+  LUMIO_DASHBOARD_ORIGIN: "https://app.lumio.nightnoryu.com"
   LUMIO_SERVE_REST_ADDRESS: ":8080"
   LUMIO_METRICS_ADDRESS: ":9090"
   LUMIO_DB_HOST: "postgres"
@@ -16,7 +16,7 @@ data:
   LUMIO_DB_MAX_CONN: "10"
   LUMIO_DB_CONN_LIFETIME: "60s"
   LUMIO_S3_ENDPOINT: "http://minio:9000"
-  LUMIO_S3_PUBLIC_ENDPOINT: "https://s3.lumio.ru"
+  LUMIO_S3_PUBLIC_ENDPOINT: "https://s3.lumio.nightnoryu.com"
   LUMIO_S3_REGION: "us-east-1"
   LUMIO_S3_BUCKET: "lumio"
   # k3s default pod CIDR; change to match the actual cluster. NetworkPolicy restricts ingress peers.
