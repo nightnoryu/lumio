@@ -19,5 +19,5 @@ data:
   LUMIO_S3_PUBLIC_ENDPOINT: "https://s3.lumio.nightnoryu.com"
   LUMIO_S3_REGION: "us-east-1"
   LUMIO_S3_BUCKET: "lumio"
-  # k3s default pod CIDR; change to match the actual cluster. NetworkPolicy restricts ingress peers.
+  # k3s default pod CIDR; change to match the actual cluster.
   LUMIO_TRUSTED_PROXY_CIDRS: "10.42.0.0/16"

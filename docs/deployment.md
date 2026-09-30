@@ -38,8 +38,8 @@ pinning upstream image digests and an immutable Alpine package mirror.
 
 ## Cluster prerequisites
 
-Use k3s with the `local-path` StorageClass, its network-policy controller
-enabled, Traefik v3 and its Middleware CRD. PostgreSQL and MinIO each have one
+Use k3s with the `local-path` StorageClass, Traefik v3 and its Middleware CRD.
+PostgreSQL and MinIO each have one
 Recreate Deployment and a persistent claim. This is a single-node pilot setup,
 with no replication or protection against losing that node. Keep the PVCs when
 upgrading. The MinIO community image matches local development and runs as root
@@ -58,12 +58,42 @@ new resources. Traefik's
 [Ingress TLS annotations](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress/)
 select the resolver and certificate domains.
 
-Check the pod CIDR in `config.env` and Traefik labels in the NetworkPolicies.
-Only Traefik may reach the web service; only web/worker may reach PostgreSQL.
-MinIO allows web/worker and Traefik. Monitoring in namespace `monitoring` may
-reach port 9090. Change that namespace selector to match your installation.
-Do not disable network policy while trusting the whole pod CIDR. Keep Traefik's
-forwarded-header trust restricted to actual upstream proxies, if any.
+### Beget DNS-01 challenge aliases
+
+Beget's `dns/getData` can fail for DNS-only `_acme-challenge` names even when the
+parent zone is managed by Beget. The Lego provider reads that name before
+writing its TXT record, so certificate issuance stops with `METHOD_FAILED`.
+Use dedicated Beget-managed subdomains as validation targets:
+
+1. In Beget's **Domains and subdomains** panel, create managed subdomains
+   `acme-lumio.nightnoryu.com` and `acme-grafana.nightnoryu.com`. These names
+   must not serve traffic or hold other records; the Beget provider replaces
+   their record sets while solving challenges.
+2. In the `nightnoryu.com` DNS zone, add these explicit CNAME records:
+
+   | Name | Target |
+   |------|--------|
+   | `_acme-challenge.lumio.nightnoryu.com` | `acme-lumio.nightnoryu.com` |
+   | `_acme-challenge.grafana.nightnoryu.com` | `acme-grafana.nightnoryu.com` |
+
+   The first name handles both `lumio.nightnoryu.com` and its wildcard
+   certificate. Lego follows each CNAME and asks Beget to write TXT records at
+   its target.
+3. Before restarting Traefik, verify that Beget's `dns/getData` API returns
+   `success` for both target names and that public DNS resolves both CNAMEs.
+   A DNS record alone is insufficient if `getData` still fails for its target.
+   Retry staging issuance and inspect Traefik's ACME logs and served
+   certificate. Switch to the production CA only after staging works.
+
+If Beget cannot create managed validation targets or read them through
+`dns/getData`, delegate these challenge CNAMEs to a zone managed by a DNS
+provider with a working Traefik integration. Do not point them at the main
+`nightnoryu.com` name: Beget's `changeRecords` replaces the record set there.
+
+Check the trusted proxy CIDR in `k8s/prod/configmap.yaml` against the actual
+cluster pod CIDR. The Lumio namespace has no NetworkPolicies, so other pods in
+the cluster can reach its Services. Keep Traefik's forwarded-header trust
+restricted to actual upstream proxies, if any.
 
 ## First deployment sequence (operator runbook)
 
@@ -72,8 +102,7 @@ Run this sequence only when deployment is authorized:
 1. Configure DNS and Traefik as above. Ensure registry images are readable by
    the cluster; add an imagePullSecret to the pod specs for private images.
 2. Render the production overlay. Create its Namespace, generated ConfigMap and
-   Secret, PVCs, PostgreSQL/MinIO Deployments, Services and NetworkPolicies
-   first.
+   Secret, PVCs, PostgreSQL/MinIO Deployments and Services first.
    Wait for both data services to become ready. Do not start web/worker yet.
 3. Provision the dedicated private bucket and application account below.
 4. Run the `Apply Kubernetes Manifests` workflow or apply the migration Job
