@@ -46,11 +46,12 @@ upgrading. The MinIO community image matches local development and runs as root
 to write its data volume. The application uses a separate restricted MinIO
 account.
 
-Configure Traefik only in `../ansible-k3s`: the role there supports DNS-01 with
-an existing provider-credential Secret, staging/production ACME files, one
-replica, Recreate updates and protected persistent certificate storage. Follow
-that repo's `docs/configuration.md`. Create DNS-only A records for `lumio.ru`
-and `*.lumio.ru` to the ingress IP. Add AAAA only for working IPv6. Issue
+Configure Traefik only in `../ansible-k3s`: the role there creates the DNS-01
+provider credential Secret from controller environment variables, supports
+staging/production ACME files, one replica, Recreate updates and protected
+persistent certificate storage. Follow that repo's `docs/configuration.md`.
+Create DNS-only A records for `lumio.nightnoryu.com` and
+`*.lumio.nightnoryu.com` to the ingress IP. Add AAAA only for working IPv6. Issue
 against staging first, then switch to production. The Ingress explicitly
 requests one apex + wildcard certificate; new photographer subdomains need no
 new resources. Traefik's
@@ -135,9 +136,9 @@ not scrape twice. Metrics and database/storage ports have no public Services.
 
 Before inviting users, verify:
 
-- Apex, dashboard and two photographer subdomains have trusted TLS. Unknown
-  portfolios return 404; the apex currently also returns 404 because the
-  application has no landing page. Its HTTPS route is prepared.
+- Apex, dashboard and two photographer subdomains have trusted TLS. The apex
+  redirects to the dashboard until a landing page is available. Unknown
+  portfolios return 404.
 - Upload, preview, publish and unpublish work; anonymous original requests fail.
 - Restart each application/data Deployment and Traefik, checking stored photos,
   database records and the same certificate survive.

@@ -25,6 +25,10 @@ func (h *apiHandler) hostRouter(dashboard http.Handler) http.Handler {
 			dashboard.ServeHTTP(w, r)
 			return
 		}
+		if r.Host == h.config.BaseDomain && r.URL.Path == "/" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
+			http.Redirect(w, r, h.config.Origin+"/", http.StatusFound)
+			return
+		}
 		w.Header().Set("Cache-Control", "no-store")
 		slug, valid := publicSlug(r.Host, h.config.BaseDomain, origin.Port())
 		if !valid || h.config.Portfolio == nil {

@@ -10,6 +10,7 @@ import (
 	"testing/fstest"
 
 	"github.com/nightnoryu/go-kita/jsonlog"
+	"github.com/nightnoryu/go-kita/log"
 )
 
 func TestRoutes(t *testing.T) {
@@ -60,6 +61,35 @@ func TestRoutes(t *testing.T) {
 			}
 			if strings.Contains(response.Body.String(), "password") {
 				t.Error("dependency error exposed to client")
+			}
+		}
+	}
+}
+
+func TestApexRedirect(t *testing.T) {
+	for _, base := range []string{"lumio.test", "lumio.nightnoryu.com"} {
+		origin := "https://app." + base
+		handler, err := NewRouter(fstest.MapFS{}, func(context.Context) error { return nil }, log.NoopLogger{}, APIConfig{
+			Origin: origin, BaseDomain: base,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, tc := range []struct {
+			method, target string
+			status         int
+			location       string
+		}{
+			{http.MethodGet, "https://" + base + "/", http.StatusFound, origin + "/"},
+			{http.MethodHead, "https://" + base + "/", http.StatusFound, origin + "/"},
+			{http.MethodGet, "https://" + base + "/api/status", http.StatusNotFound, ""},
+			{http.MethodPost, "https://" + base + "/", http.StatusNotFound, ""},
+			{http.MethodGet, "https://other.test/", http.StatusNotFound, ""},
+		} {
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, httptest.NewRequest(tc.method, tc.target, http.NoBody))
+			if response.Code != tc.status || response.Header().Get("Location") != tc.location {
+				t.Errorf("%s %s: got %d, location %q", tc.method, tc.target, response.Code, response.Header().Get("Location"))
 			}
 		}
 	}
