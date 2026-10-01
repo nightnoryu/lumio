@@ -70,10 +70,8 @@ Use dedicated Beget-managed subdomains as validation targets:
    their record sets while solving challenges.
 2. In the `nightnoryu.com` DNS zone, add these explicit CNAME records:
 
-   | Name | Target |
-   |------|--------|
-   | `_acme-challenge.lumio.nightnoryu.com` | `acme-lumio.nightnoryu.com` |
-   | `_acme-challenge.grafana.nightnoryu.com` | `acme-grafana.nightnoryu.com` |
+   - `_acme-challenge.lumio.nightnoryu.com` → `acme-lumio.nightnoryu.com`
+   - `_acme-challenge.grafana.nightnoryu.com` → `acme-grafana.nightnoryu.com`
 
    The first name handles both `lumio.nightnoryu.com` and its wildcard
    certificate. Lego follows each CNAME and asks Beget to write TXT records at
