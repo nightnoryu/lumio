@@ -4,6 +4,7 @@ on:
   pull_request:
     paths: &k8s-paths
       - 'k8s/base/**'
+      - 'mise.toml'
       - '.github/workflows/validate-k8s.yml'
   push:
     branches: [ main ]
@@ -19,19 +20,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Install kubeconform
-        run: |
-          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
-            | tar -xz kubeconform
-          sudo mv kubeconform /usr/local/bin/kubeconform
-
-      - name: Build kustomization
-        run: kubectl kustomize k8s/base > rendered.yaml
+      - name: Setup mise
+        uses: jdx/mise-action@v4
+        with:
+          install: true
+          cache: true
 
       - name: Validate base manifests
-        run: |
-          kubeconform \
-            -strict \
-            -summary \
-            -ignore-missing-schemas \
-            rendered.yaml
+        run: mise run k8s:lint

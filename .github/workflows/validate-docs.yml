@@ -5,6 +5,7 @@ on:
     paths: &docs-paths
       - 'README.md'
       - 'docs/**'
+      - 'mise.toml'
       - '.github/workflows/validate-docs.yml'
   push:
     branches: [ main ]
@@ -20,9 +21,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Lint Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v24
+      - name: Setup mise
+        uses: jdx/mise-action@v4
         with:
-          globs: |
-            README.md
-            docs/**/*.md
+          install: true
+          cache: true
+
+      - name: Lint Markdown
+        run: mise run docs:lint
