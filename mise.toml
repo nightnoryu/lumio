@@ -5,6 +5,10 @@ golangci-lint = "2.12.2"
 node = "26.8.1"
 pnpm = "12.3.1"
 
+kubectl = "1.37.0"
+kubeconform = "0.8.0"
+"npm:markdownlint-cli2" = "0.23.2"
+
 # Generators and installers may leave unchanged outputs with old mtimes.
 [settings]
 task.source_freshness_hash_contents = true
@@ -174,3 +178,22 @@ run = [ "golangci-lint run" ]
 dir = "web"
 depends = [ "web:generate" ]
 run = [ "pnpm run lint" ]
+
+[tasks."docs:lint"]
+run = "markdownlint-cli2 README.md 'docs/**/*.md'"
+sources = [
+    "README.md",
+    "docs/**/*.md",
+]
+
+[tasks."k8s:lint"]
+run = """
+set -e
+rendered=$(mktemp)
+trap 'rm -f "$rendered"' EXIT
+kubectl kustomize k8s/base > "$rendered"
+kubeconform -strict -summary -ignore-missing-schemas "$rendered"
+"""
+sources = [
+    "k8s/base/**/*",
+]
