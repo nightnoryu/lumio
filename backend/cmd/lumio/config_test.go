@@ -16,6 +16,9 @@ func TestConfigFromEnvironment(t *testing.T) {
 		"LUMIO_DB_MAX_CONN": "10", "LUMIO_DB_CONN_LIFETIME": "60s",
 		"LUMIO_LOG_LEVEL":        "info",
 		"LUMIO_DASHBOARD_ORIGIN": "http://localhost:3000", "LUMIO_BASE_DOMAIN": "localhost",
+		"LUMIO_S3_ENDPOINT": "http://localhost:3900", "LUMIO_S3_PUBLIC_ENDPOINT": "http://localhost:3900",
+		"LUMIO_S3_REGION": "garage", "LUMIO_S3_BUCKET": "lumio",
+		"LUMIO_S3_ACCESS_KEY": "GKtest", "LUMIO_S3_SECRET_KEY": "test-secret",
 	} {
 		t.Setenv(key, value)
 	}
@@ -80,5 +83,28 @@ func TestConfigFromEnvironment(t *testing.T) {
 	t.Setenv("LUMIO_DB_CONN_LIFETIME", "invalid")
 	if _, err := env.ParseEnv[config]("lumio"); err == nil {
 		t.Fatal("invalid environment duration accepted")
+	}
+}
+
+func TestS3EnvironmentRequired(t *testing.T) {
+	for _, name := range []string{"S3_ENDPOINT", "S3_PUBLIC_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"} {
+		t.Run(name, func(t *testing.T) {
+			for _, field := range []string{"S3_ENDPOINT", "S3_PUBLIC_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"} {
+				t.Setenv("LUMIO_"+field, "value")
+			}
+			t.Setenv("LUMIO_DB_HOST", "localhost")
+			t.Setenv("LUMIO_DB_NAME", "lumio")
+			t.Setenv("LUMIO_DB_USER", "lumio")
+			t.Setenv("LUMIO_DB_PASSWORD", "test")
+			if _, err := env.ParseEnv[config]("lumio"); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Unsetenv("LUMIO_" + name); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := env.ParseEnv[config]("lumio"); err == nil {
+				t.Fatalf("missing LUMIO_%s accepted", name)
+			}
+		})
 	}
 }

@@ -20,12 +20,12 @@ const localhost = "localhost"
 type config struct {
 	MetricsAddress    string   `env:"METRICS_ADDRESS"`
 	TrustedProxyCIDRs []string `env:"TRUSTED_PROXY_CIDRS" envSeparator:","`
-	S3Endpoint        string   `env:"S3_ENDPOINT" envDefault:"http://localhost:9000"`
-	S3PublicEndpoint  string   `env:"S3_PUBLIC_ENDPOINT" envDefault:"http://localhost:9000"`
-	S3Region          string   `env:"S3_REGION" envDefault:"us-east-1"`
-	S3Bucket          string   `env:"S3_BUCKET" envDefault:"lumio"`
-	S3AccessKey       string   `env:"S3_ACCESS_KEY" envDefault:"lumio-local"`
-	S3SecretKey       string   `env:"S3_SECRET_KEY" envDefault:"lumio-local-only"`
+	S3Endpoint        string   `env:"S3_ENDPOINT,required"`
+	S3PublicEndpoint  string   `env:"S3_PUBLIC_ENDPOINT,required"`
+	S3Region          string   `env:"S3_REGION,required"`
+	S3Bucket          string   `env:"S3_BUCKET,required"`
+	S3AccessKey       string   `env:"S3_ACCESS_KEY,required"`
+	S3SecretKey       string   `env:"S3_SECRET_KEY,required"`
 	MediaFileBytes    int64    `env:"MEDIA_FILE_BYTES" envDefault:"52428800"`
 	MediaStorageBytes int64    `env:"MEDIA_STORAGE_BYTES" envDefault:"2147483648"`
 	MediaPhotos       int      `env:"MEDIA_PHOTOS" envDefault:"100"`
