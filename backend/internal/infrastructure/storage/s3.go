@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -113,13 +112,14 @@ func (s *S3) deleteObjects(ctx context.Context, prefix, keep string) error {
 }
 
 // Initialize is an explicit local-development command, never run during server startup.
-func (s *S3) Initialize(ctx context.Context) error {
-	_, err := s.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &s.bucket})
-	var owned *types.BucketAlreadyOwnedByYou
-	if err != nil && !errors.As(err, &owned) {
-		return err
+func (s *S3) Initialize(ctx context.Context, dashboardOrigin string) error {
+	if _, err := s.client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &s.bucket}); err != nil {
+		if _, err = s.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &s.bucket}); err != nil {
+			return err
+		}
 	}
-	if _, err = s.client.DeleteBucketPolicy(ctx, &s3.DeleteBucketPolicyInput{Bucket: &s.bucket}); err != nil {
+	_, err := s.client.PutBucketCors(ctx, &s3.PutBucketCorsInput{Bucket: &s.bucket, CORSConfiguration: &types.CORSConfiguration{CORSRules: []types.CORSRule{{AllowedOrigins: []string{dashboardOrigin}, AllowedMethods: []string{"PUT", "GET", "HEAD"}, AllowedHeaders: []string{"Content-Type", "If-None-Match"}, ExposeHeaders: []string{"ETag"}}}}})
+	if err != nil {
 		return err
 	}
 	_, err = s.client.PutBucketLifecycleConfiguration(ctx, &s3.PutBucketLifecycleConfigurationInput{Bucket: &s.bucket, LifecycleConfiguration: &types.BucketLifecycleConfiguration{Rules: []types.LifecycleRule{{ID: aws.String("expire-staged-uploads"), Status: types.ExpirationStatusEnabled, Filter: &types.LifecycleRuleFilter{Prefix: aws.String("uploads/")}, Expiration: &types.LifecycleExpiration{Days: aws.Int32(1)}}}}})

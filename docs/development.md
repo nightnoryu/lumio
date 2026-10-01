@@ -12,8 +12,7 @@ mise run dev
 Open **[http://localhost:3000](http://localhost:3000)**. Traefik routes
 `/api/*`, `/healthz`, `/livez`, `/preview/*` and `/portfolio.js` to Go; Vite
 serves the dashboard and hot reloads frontend edits over the same origin. Go
-changes need `mise run dev:reload`. Ports 3000, 5432,
-9000, and 9001 must be free.
+changes need `mise run dev:reload`. Ports 3000, 5432 and 3900 must be free.
 
 ## Common commands
 
@@ -85,7 +84,7 @@ after cleanup.
 
 ```sh
 mise run backend:test:media  # Real libvips processing inside the worker image
-# Local MinIO integration uses the default development credentials:
+# Local Garage integration uses the default development credentials:
 docker compose run --rm lumio-storage-init
 LUMIO_TEST_STORAGE=1 mise run backend:test:e2e
 ```

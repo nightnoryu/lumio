@@ -28,7 +28,7 @@ k8s/prod/secret.enc.yaml` while the existing private key is available.
 The generated Secret has a stable name. After changing it, restart web, worker
 and the affected data-service Deployments so their environment is refreshed.
 Changing PostgreSQL's Secret does not rotate an existing database role password;
-coordinate the database role and MinIO application-user password changes first.
+coordinate the database role and Garage key rotation first.
 The deploy workflow selects the matching version tags for both images after a
 release. For a manual deploy, supply an image tag or use the tags committed in
 `k8s/prod/kustomization.yaml`. Release CI publishes both images. Local Compose
@@ -39,12 +39,11 @@ pinning upstream image digests and an immutable Alpine package mirror.
 ## Cluster prerequisites
 
 Use k3s with the `local-path` StorageClass, Traefik v3 and its Middleware CRD.
-PostgreSQL and MinIO each have one
+PostgreSQL and Garage each have one
 Recreate Deployment and a persistent claim. This is a single-node pilot setup,
 with no replication or protection against losing that node. Keep the PVCs when
-upgrading. The MinIO community image matches local development and runs as root
-to write its data volume. The application uses a separate restricted MinIO
-account.
+upgrading. Garage uses a single node with replication factor one and stores its
+metadata and objects on its own PVC. Its S3 key is scoped to the `lumio` bucket.
 
 Configure Traefik only in `../ansible-k3s`: the role there creates the DNS-01
 provider credential Secret from controller environment variables, supports
@@ -102,9 +101,9 @@ Run this sequence only when deployment is authorized:
 1. Configure DNS and Traefik as above. Ensure registry images are readable by
    the cluster; add an imagePullSecret to the pod specs for private images.
 2. Render the production overlay. Create its Namespace, generated ConfigMap and
-   Secret, PVCs, PostgreSQL/MinIO Deployments and Services first.
+   Secret, PVCs, PostgreSQL/Garage Deployments and Services first.
    Wait for both data services to become ready. Do not start web/worker yet.
-3. Provision the dedicated private bucket and application account below.
+3. Configure the dedicated private bucket below.
 4. Run the `Apply Kubernetes Manifests` workflow or apply the migration Job
    before the remaining web/worker and Ingress manifests. The Job runs embedded
    migrations under a PostgreSQL advisory lock; a failed migration stops the
@@ -114,35 +113,38 @@ Run this sequence only when deployment is authorized:
 
 The deploy workflow requires the `prod` environment with `KUBECONFIG` and
 `SOPS_AGE_KEY` secrets. It applies the namespace, config, secret and data
-services first, waits for PostgreSQL and MinIO, recreates and waits for the
+services first, waits for PostgreSQL and Garage, recreates and waits for the
 migration Job, then applies the remaining resources and waits for web/worker.
 The release workflow calls it after publishing the GitHub Release. Provision
-the MinIO bucket, user, policy and lifecycle rules before the first rollout.
+Garage bucket CORS and lifecycle rules before the first rollout.
 
-For storage provisioning, forward MinIO's API locally (no public console or
-admin API is routed). In a separate terminal, use
-`kubectl -n lumio port-forward service/minio 9000:9000`. With the MinIO `mc`
-client, set a local alias using the root credentials from your secret store:
+Garage creates the `lumio` bucket and its owner key on first boot using
+`LUMIO_S3_ACCESS_KEY` and `LUMIO_S3_SECRET_KEY` from the Secret. Replace the
+encrypted placeholders with a Garage key ID (`GK` plus 32 hex characters) and
+a 64-character hex secret before deploying.
+Forward Garage's S3 API locally (no admin API is routed) with
+`kubectl -n lumio port-forward service/garage 3900:3900`. In another terminal,
+use the AWS CLI with credentials from your secret store:
 
 ```sh
-mc alias set lumio-admin http://127.0.0.1:9000 \
-  "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
-mc mb --ignore-existing lumio-admin/lumio
-mc anonymous set none lumio-admin/lumio
-mc ilm import lumio-admin/lumio < k8s/prod/storage-lifecycle.json
-mc admin user add lumio-admin "$LUMIO_S3_ACCESS_KEY" "$LUMIO_S3_SECRET_KEY"
-mc admin policy create lumio-admin lumio-app k8s/prod/storage-policy.json
-mc admin policy attach lumio-admin lumio-app --user "$LUMIO_S3_ACCESS_KEY"
+export AWS_ACCESS_KEY_ID="$LUMIO_S3_ACCESS_KEY"
+export AWS_SECRET_ACCESS_KEY="$LUMIO_S3_SECRET_KEY"
+export AWS_DEFAULT_REGION=garage
+aws --endpoint-url http://127.0.0.1:3900 s3api put-bucket-cors \
+  --bucket lumio --cors-configuration file://k8s/prod/storage-cors.json
+aws --endpoint-url http://127.0.0.1:3900 s3api \
+  put-bucket-lifecycle-configuration --bucket lumio \
+  --lifecycle-configuration file://k8s/prod/storage-lifecycle.json
 ```
 
 Use these initialization commands only for the dedicated Lumio bucket; the
-lifecycle import replaces existing rules. Protect and remove the local `mc`
-alias credentials afterward. `storage-init` is development-only and is not
-used in production. MinIO's CORS environment allows exactly the dashboard
+lifecycle command replaces existing rules. Unset the AWS credential variables
+afterward. `storage-init` is development-only and is not used in production.
+Garage's bucket CORS allows exactly the dashboard
 origin. Check a browser preflight for PUT with Content-Type and If-None-Match,
 and GET/HEAD with exposed ETag. All objects remain private. S3 ingress routes
-only `/lumio/` without rewriting host, path or query; no MinIO console, root
-bucket listing or admin API is exposed. The `s3` slug is reserved.
+only `/lumio/` without rewriting host, path or query; no Garage admin API or
+root bucket listing is exposed. The `s3` slug is reserved.
 
 ## Operations and verification
 
@@ -186,22 +188,29 @@ state. Using local port forwards and credentials from your secret store:
 ```sh
 pg_dump --host=127.0.0.1 --username=lumio --dbname=lumio \
   --format=custom --file=lumio.dump
-mc mirror lumio-admin/lumio /secure-backup/lumio-objects
+aws --endpoint-url http://127.0.0.1:3900 s3 sync \
+  s3://lumio /secure-backup/lumio-objects
 ```
 
 Forward PostgreSQL port 5432 separately. `pg_dump` prompts for its password;
 do not place it in shell history. Copy the dump and objects off the cluster,
 encrypt them, retain dated copies, and also preserve configuration, secrets,
-the lifecycle/policy files and Traefik's private ACME files. A local PVC and
-MinIO staging expiry are not backups. Restart web/worker after both copies
+the lifecycle/CORS files and Traefik's private ACME files. A local PVC and
+Garage staging expiry are not backups. Restart web/worker after both copies
 complete. A fresh backup directory avoids retaining deleted objects by mistake.
 
-To restore, keep web/worker stopped and provision empty PostgreSQL 16 and MinIO
+To restore, keep web/worker stopped and provision empty PostgreSQL 16 and Garage
 volumes in an isolated environment. Create the database/user with the same
-names and re-create the private bucket, policy, lifecycle and application user.
+names and re-create the private bucket, CORS, lifecycle and application key.
 Restore with `pg_restore --host=127.0.0.1 --username=lumio --dbname=lumio
---no-owner --exit-on-error lumio.dump`, then
-`mc mirror /secure-backup/lumio-objects lumio-admin/lumio`. Restore secrets and
+--no-owner --exit-on-error lumio.dump`, then restore objects:
+
+```sh
+aws --endpoint-url http://127.0.0.1:3900 s3 sync \
+  /secure-backup/lumio-objects s3://lumio
+```
+
+Restore secrets and
 start the image version corresponding to the backup before upgrading. Check
 row counts, login, original object access, public images and a new upload.
 Record that recovery test before relying on these backups. For rollback across

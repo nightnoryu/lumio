@@ -58,7 +58,7 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 		return err
 	}
 	if len(os.Args) > 1 && os.Args[1] == "storage-init" {
-		return objects.Initialize(ctx)
+		return objects.Initialize(ctx, cfg.DashboardOrigin)
 	}
 	if err = objects.VerifyLifecycle(ctx); err != nil {
 		return err

@@ -42,7 +42,7 @@ jobs:
       - name: Wait for prerequisites
         run: |
           kubectl rollout status deployment/postgres -n lumio --timeout=300s
-          kubectl rollout status deployment/minio -n lumio --timeout=300s
+          kubectl rollout status deployment/garage -n lumio --timeout=300s
 
       - name: Run migrations
         run: |

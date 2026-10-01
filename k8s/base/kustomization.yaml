@@ -5,6 +5,6 @@ namespace: lumio
 
 resources:
   - namespace.yaml
-  - minio
+  - garage
   - postgres
   - lumio

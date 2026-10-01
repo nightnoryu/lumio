@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garage
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: garage
+  template:
+    metadata:
+      labels:
+        app: garage
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      initContainers:
+        - name: rpc-secret
+          image: alpine:3.20
+          command: ["/bin/sh", "-ec"]
+          args:
+            - 'if [ ! -s /data/rpc-secret ]; then umask 077; head -c 32 /dev/urandom | od -An -tx1 | tr -d " \n" > /data/rpc-secret; fi'
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: garage
+          image: dxflrs/garage:v2.4.1
+          args: ["/garage", "server", "--single-node", "--default-bucket"]
+          env:
+            - name: GARAGE_DEFAULT_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lumio-secrets
+                  key: LUMIO_S3_ACCESS_KEY
+            - name: GARAGE_DEFAULT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lumio-secrets
+                  key: LUMIO_S3_SECRET_KEY
+            - name: GARAGE_DEFAULT_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: lumio-config
+                  key: LUMIO_S3_BUCKET
+          ports:
+            - containerPort: 3900
+              name: s3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/garage.toml
+              subPath: garage.toml
+              readOnly: true
+          startupProbe:
+            exec:
+              command: ["/garage", "status"]
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command: ["/garage", "status"]
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["/garage", "status"]
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: garage-data
+        - name: config
+          configMap:
+            name: garage-config

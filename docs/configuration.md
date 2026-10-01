@@ -3,21 +3,15 @@
 ## Local services
 
 PostgreSQL is available at `localhost:5432` (database/user `lumio`, password
-`lumio-local-only`). MinIO exposes S3 at `http://localhost:9000` and its
-console at `http://localhost:9001` (user `lumio-local`, password
-`lumio-local-only`). These credentials are for local development. Override
-them in an ignored `.env` file using `LUMIO_DB_PASSWORD`,
-`LUMIO_MINIO_USER`, and `LUMIO_MINIO_PASSWORD`. Volumes preserve data across
-restarts; changing the PostgreSQL environment password does not change an
-existing database role.
-
-The local MinIO image is the
-[alpine-docker community build](https://hub.docker.com/r/alpine/minio/) of
-`RELEASE.2025-10-15T17-29-55Z`, pinned by release tag; official MinIO image
-repositories were unavailable when this setup was verified. The local MinIO
-container runs as root because that image leaves its `/data` volume owned by
-root. Compose creates a private `lumio` bucket and configures one-day expiry for
-`uploads/` staging objects before starting the API and worker.
+`lumio-local-only`). Garage exposes S3 at `http://localhost:3900`. Compose
+supplies local development S3 credentials. Override them in an ignored `.env`
+with `LUMIO_S3_ACCESS_KEY` and `LUMIO_S3_SECRET_KEY` if needed. Garage key IDs
+start with `GK` followed by 32 hex characters; secrets are 64 hex characters.
+Set `LUMIO_DB_PASSWORD` there as needed. Volumes preserve data across restarts;
+changing credentials after initializing Garage or PostgreSQL does not rotate
+existing accounts. Garage
+creates the private `lumio` bucket and key on first boot. The storage init step
+sets dashboard CORS and one-day expiry for `uploads/` before the API starts.
 
 ## Standalone executable
 
@@ -30,6 +24,12 @@ LUMIO_DB_HOST=localhost \
 LUMIO_DB_NAME=lumio \
 LUMIO_DB_USER=lumio \
 LUMIO_DB_PASSWORD=lumio-local-only \
+LUMIO_S3_ENDPOINT=http://localhost:3900 \
+LUMIO_S3_PUBLIC_ENDPOINT=http://localhost:3900 \
+LUMIO_S3_REGION=garage \
+LUMIO_S3_BUCKET=lumio \
+LUMIO_S3_ACCESS_KEY=GK11111111111111111111111111111111 \
+LUMIO_S3_SECRET_KEY=1111111111111111111111111111111111111111111111111111111111111111 \
 ./backend/bin/lumio
 ```
 
@@ -61,8 +61,8 @@ SIGINT and SIGTERM allow up to 10 seconds for active requests to finish.
 
 <!-- markdownlint-enable MD013 -->
 
-Missing or invalid settings fail startup. Configure local-only MinIO credentials
-through the `.env` variables described above.
+Missing or invalid settings fail startup. Compose supplies all six required S3
+settings to the backend.
 
 ## Media storage and worker
 
@@ -70,12 +70,12 @@ through the `.env` variables described above.
 
 | Variable                    | Default                 | Meaning                                                |
 |-----------------------------|-------------------------|--------------------------------------------------------|
-| `LUMIO_S3_ENDPOINT`         | `http://localhost:9000` | Server/worker S3 endpoint; path-style                  |
-| `LUMIO_S3_PUBLIC_ENDPOINT`  | `http://localhost:9000` | Browser S3 endpoint; use HTTPS with an HTTPS dashboard |
-| `LUMIO_S3_REGION`           | `us-east-1`             | Signing region                                         |
-| `LUMIO_S3_BUCKET`           | `lumio`                 | Private media bucket                                   |
-| `LUMIO_S3_ACCESS_KEY`       | `lumio-local`           | S3 key; replace outside development                    |
-| `LUMIO_S3_SECRET_KEY`       | `lumio-local-only`      | S3 secret; replace outside dev                         |
+| `LUMIO_S3_ENDPOINT`         | required                | Server/worker S3 endpoint; path-style                  |
+| `LUMIO_S3_PUBLIC_ENDPOINT`  | required                | Browser S3 endpoint; use HTTPS with an HTTPS dashboard |
+| `LUMIO_S3_REGION`           | required                | Signing region                                         |
+| `LUMIO_S3_BUCKET`           | required                | Private media bucket                                   |
+| `LUMIO_S3_ACCESS_KEY`       | required                | Garage key ID                                          |
+| `LUMIO_S3_SECRET_KEY`       | required                | Garage secret                                          |
 | `LUMIO_MEDIA_FILE_BYTES`    | `52428800`              | Max original size (50 MiB; up to 500 MiB)              |
 | `LUMIO_MEDIA_STORAGE_BYTES` | `2147483648`            | Original storage per site (2 GiB)                      |
 | `LUMIO_MEDIA_PHOTOS`        | `100`                   | Photo reservations per site                            |
@@ -88,19 +88,17 @@ limit and two CPUs. The web process needs no libvips. Keep clocks synchronized
 because job deadlines use PostgreSQL claim timestamps.
 
 For standalone local setup, run `lumio storage-init` once with the same
-settings. This explicit **development-only** command creates the bucket, removes
-its public policy and replaces lifecycle rules with one-day expiry for
+settings. This explicit **development-only** command creates the bucket, sets
+dashboard CORS and replaces lifecycle rules with one-day expiry for
 `uploads/`. Never use it against a bucket with other lifecycle policies.
 Production provisioning must configure the private bucket, block anonymous
 access, and add that staging rule itself. API and worker startup verify the
-lifecycle rule exists. Runtime credentials need object Get/Put/Copy/Delete,
-ListBucket and GetLifecycleConfiguration; initialization additionally needs
-bucket creation, DeleteBucketPolicy and PutLifecycleConfiguration. Do not grant
-browser credentials.
+lifecycle rule exists. Runtime credentials need Garage read/write bucket access;
+initialization also needs owner access. Do not grant browser credentials.
 
 Configure bucket CORS for the exact dashboard origin, methods PUT/GET/HEAD,
 request headers `Content-Type` and `If-None-Match`, and expose `ETag`. Compose
-sets MinIO's allowed origin to `http://localhost:3000`; change it when using a
+sets Garage bucket CORS from `LUMIO_DASHBOARD_ORIGIN`; change it when using a
 standalone dashboard port. Do not rewrite the host/path of signed URLs. All S3
 objects stay private. Owners receive five-minute preview URLs for optimized
 variants only. Public portfolios stream optimized images through Go after
