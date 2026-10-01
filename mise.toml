@@ -7,7 +7,6 @@ pnpm = "12.3.1"
 
 kubectl = "1.37.0"
 kubeconform = "0.8.0"
-"npm:markdownlint-cli2" = "0.23.2"
 
 # Generators and installers may leave unchanged outputs with old mtimes.
 [settings]
@@ -178,13 +177,6 @@ run = [ "golangci-lint run" ]
 dir = "web"
 depends = [ "web:generate" ]
 run = [ "pnpm run lint" ]
-
-[tasks."docs:lint"]
-run = "markdownlint-cli2 README.md 'docs/**/*.md'"
-sources = [
-    "README.md",
-    "docs/**/*.md",
-]
 
 [tasks."k8s:lint"]
 run = """

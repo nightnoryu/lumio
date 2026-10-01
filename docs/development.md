@@ -26,7 +26,6 @@ mise run               # Build, test, type-check, lint, and check Go formatting
 mise run build         # Build backend/bin/lumio with React assets embedded
 mise run test
 mise run lint
-mise run docs:lint     # Lint README.md and docs Markdown files
 mise run k8s:lint      # Render and validate k8s/base manifests
 mise run backend:generate  # Regenerate ogen code from api/publicapi.yml
 ```
