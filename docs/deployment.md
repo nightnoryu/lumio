@@ -38,54 +38,22 @@ pinning upstream image digests and an immutable Alpine package mirror.
 
 ## Cluster prerequisites
 
-Use k3s with the `local-path` StorageClass, Traefik v3 and its Middleware CRD.
+This runbook assumes the cluster is already configured with DNS records,
+Traefik v3, ACME certificate issuance and its Middleware CRD. It also assumes
+the `local-path` StorageClass is available.
 PostgreSQL and Garage each have one
 Recreate Deployment and a persistent claim. This is a single-node pilot setup,
 with no replication or protection against losing that node. Keep the PVCs when
 upgrading. Garage uses a single node with replication factor one and stores its
 metadata and objects on its own PVC. Its S3 key is scoped to the `lumio` bucket.
 
-Configure Traefik only in `../ansible-k3s`: the role there creates the DNS-01
-provider credential Secret from controller environment variables, supports
-staging/production ACME files, one replica, Recreate updates and protected
-persistent certificate storage. Follow that repo's `docs/configuration.md`.
-Create DNS-only A records for `lumio.nightnoryu.com` and
-`*.lumio.nightnoryu.com` to the ingress IP. Add AAAA only for working IPv6. Issue
-against staging first, then switch to production. The Ingress explicitly
-requests one apex + wildcard certificate; new photographer subdomains need no
-new resources. Traefik's
-[Ingress TLS annotations](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress/)
-select the resolver and certificate domains.
-
-### Beget DNS-01 challenge aliases
-
-Beget's `dns/getData` can fail for DNS-only `_acme-challenge` names even when the
-parent zone is managed by Beget. The Lego provider reads that name before
-writing its TXT record, so certificate issuance stops with `METHOD_FAILED`.
-Use dedicated Beget-managed subdomains as validation targets:
-
-1. In Beget's **Domains and subdomains** panel, create managed subdomains
-   `acme-lumio.nightnoryu.com` and `acme-grafana.nightnoryu.com`. These names
-   must not serve traffic or hold other records; the Beget provider replaces
-   their record sets while solving challenges.
-2. In the `nightnoryu.com` DNS zone, add these explicit CNAME records:
-
-   - `_acme-challenge.lumio.nightnoryu.com` → `acme-lumio.nightnoryu.com`
-   - `_acme-challenge.grafana.nightnoryu.com` → `acme-grafana.nightnoryu.com`
-
-   The first name handles both `lumio.nightnoryu.com` and its wildcard
-   certificate. Lego follows each CNAME and asks Beget to write TXT records at
-   its target.
-3. Before restarting Traefik, verify that Beget's `dns/getData` API returns
-   `success` for both target names and that public DNS resolves both CNAMEs.
-   A DNS record alone is insufficient if `getData` still fails for its target.
-   Retry staging issuance and inspect Traefik's ACME logs and served
-   certificate. Switch to the production CA only after staging works.
-
-If Beget cannot create managed validation targets or read them through
-`dns/getData`, delegate these challenge CNAMEs to a zone managed by a DNS
-provider with a working Traefik integration. Do not point them at the main
-`nightnoryu.com` name: Beget's `changeRecords` replaces the record set there.
+The production overlay currently contains the application's hostnames. Before
+deploying to a different domain, update the host rules and TLS domain
+annotations in `k8s/prod/web-ingress.yaml` and `k8s/prod/s3-ingress.yaml`, plus
+the base domain and public origins in `k8s/prod/configmap.yaml` and
+`k8s/prod/storage-cors.json`. Ensure these names match the DNS and certificate
+coverage already configured on the cluster. Photographer subdomains are routed
+by the wildcard host rule.
 
 Check the trusted proxy CIDR in `k8s/prod/configmap.yaml` against the actual
 cluster pod CIDR. The Lumio namespace has no NetworkPolicies, so other pods in
@@ -96,8 +64,9 @@ restricted to actual upstream proxies, if any.
 
 Run this sequence only when deployment is authorized:
 
-1. Configure DNS and Traefik as above. Ensure registry images are readable by
-   the cluster; add an imagePullSecret to the pod specs for private images.
+1. Ensure registry images are readable by the cluster; add an imagePullSecret
+   to the pod specs for private images. Confirm the existing DNS and ACME setup
+   covers the hostnames configured in the production overlay.
 2. Render the production overlay. Create its Namespace, generated ConfigMap and
    Secret, PVCs, PostgreSQL/Garage Deployments and Services first.
    Wait for both data services to become ready. Do not start web/worker yet.
@@ -165,9 +134,9 @@ not scrape twice. Metrics and database/storage ports have no public Services.
 
 Before inviting users, verify:
 
-- Apex, dashboard and two photographer subdomains have trusted TLS. The apex
-  redirects to the dashboard until a landing page is available. Unknown
-  portfolios return 404.
+- The configured apex, dashboard and two photographer subdomains have trusted
+  TLS. The apex redirects to the dashboard until a landing page is available.
+  Unknown portfolios return 404.
 - Upload, preview, publish and unpublish work; anonymous original requests fail.
 - Restart each application/data Deployment and Traefik, checking stored photos,
   database records and the same certificate survive.
