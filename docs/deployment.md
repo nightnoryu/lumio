@@ -108,10 +108,11 @@ Use these initialization commands only for the dedicated Lumio bucket; the
 lifecycle command replaces existing rules. Unset the AWS credential variables
 afterward. `storage-init` is development-only and is not used in production.
 Garage's bucket CORS allows exactly the dashboard
-origin. Check a browser preflight for PUT with Content-Type and If-None-Match,
-and GET/HEAD with exposed ETag. All objects remain private. S3 ingress routes
-only `/lumio/` without rewriting host, path or query; no Garage admin API or
-root bucket listing is exposed. The `s3` slug is reserved.
+origin. Check a browser preflight for PUT with lowercase `content-type` and
+`if-none-match` request headers, and GET/HEAD with exposed ETag. All objects
+remain private. S3 ingress routes only `/lumio/` without rewriting host, path
+or query; no Garage admin API or root bucket listing is exposed. The `s3` slug
+is reserved.
 
 ## Operations and verification
 

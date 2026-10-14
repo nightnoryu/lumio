@@ -118,7 +118,20 @@ func (s *S3) Initialize(ctx context.Context, dashboardOrigin string) error {
 			return err
 		}
 	}
-	_, err := s.client.PutBucketCors(ctx, &s3.PutBucketCorsInput{Bucket: &s.bucket, CORSConfiguration: &types.CORSConfiguration{CORSRules: []types.CORSRule{{AllowedOrigins: []string{dashboardOrigin}, AllowedMethods: []string{"PUT", "GET", "HEAD"}, AllowedHeaders: []string{"Content-Type", "If-None-Match"}, ExposeHeaders: []string{"ETag"}}}}})
+	_, err := s.client.PutBucketCors(ctx,
+		&s3.PutBucketCorsInput{
+			Bucket: &s.bucket,
+			CORSConfiguration: &types.CORSConfiguration{
+				CORSRules: []types.CORSRule{
+					{
+						AllowedOrigins: []string{dashboardOrigin},
+						AllowedMethods: []string{"PUT", "GET", "HEAD"},
+						AllowedHeaders: []string{"content-type", "if-none-match"},
+						ExposeHeaders:  []string{"ETag"},
+					},
+				},
+			},
+		})
 	if err != nil {
 		return err
 	}

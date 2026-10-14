@@ -3,7 +3,7 @@
     {
       "AllowedOrigins": ["https://app.lumio.nightnoryu.com"],
       "AllowedMethods": ["PUT", "GET", "HEAD"],
-      "AllowedHeaders": ["Content-Type", "If-None-Match"],
+      "AllowedHeaders": ["content-type", "if-none-match"],
       "ExposeHeaders": ["ETag"]
     }
   ]

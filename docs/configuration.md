@@ -97,12 +97,14 @@ lifecycle rule exists. Runtime credentials need Garage read/write bucket access;
 initialization also needs owner access. Do not grant browser credentials.
 
 Configure bucket CORS for the exact dashboard origin, methods PUT/GET/HEAD,
-request headers `Content-Type` and `If-None-Match`, and expose `ETag`. Compose
-sets Garage bucket CORS from `LUMIO_DASHBOARD_ORIGIN`; change it when using a
-standalone dashboard port. Do not rewrite the host/path of signed URLs. All S3
-objects stay private. Owners receive five-minute preview URLs for optimized
-variants only. Public portfolios stream optimized images through Go after
-checking the active published revision. Do not enable anonymous bucket access.
+request headers `content-type` and `if-none-match`, and expose `ETag`. Garage
+matches preflight header names case-sensitively, while browsers send them in
+lowercase. Compose sets Garage bucket CORS from `LUMIO_DASHBOARD_ORIGIN`;
+change it when using a standalone dashboard port. Do not rewrite the host/path
+of signed URLs. All S3 objects stay private. Owners receive five-minute
+preview URLs for optimized variants only. Public portfolios stream optimized
+images through Go after checking the active published revision. Do not enable
+anonymous bucket access.
 
 ## Public portfolio addresses
 
