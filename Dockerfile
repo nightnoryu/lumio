@@ -2,7 +2,7 @@
 FROM node:26.8.1-alpine3.23 AS frontend
 WORKDIR /src/web
 RUN npm install --global pnpm@12.3.1
-COPY web/package.json web/pnpm-lock.yaml ./
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ ./
 COPY api/ /src/api/
