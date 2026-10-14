@@ -7,7 +7,6 @@ on:
       - 'web/**'
       - 'api/**'
       - 'mise.toml'
-      - 'k8s/**'
       - '.github/workflows/ci.yml'
   push:
     branches: [ main ]
