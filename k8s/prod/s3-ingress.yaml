@@ -7,12 +7,12 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "1000"
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: lumio.nightnoryu.com
-    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: '*.lumio.nightnoryu.com'
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: lumiopho.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: '*.lumiopho.com'
 spec:
   ingressClassName: traefik
   rules:
-    - host: s3.lumio.nightnoryu.com
+    - host: s3.lumiopho.com
       http:
         paths:
           - path: /lumio/

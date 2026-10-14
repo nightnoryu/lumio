@@ -1,7 +1,7 @@
 {
   "CORSRules": [
     {
-      "AllowedOrigins": ["https://app.lumio.nightnoryu.com"],
+      "AllowedOrigins": ["https://app.lumiopho.com"],
       "AllowedMethods": ["PUT", "GET", "HEAD"],
       "AllowedHeaders": ["content-type", "if-none-match"],
       "ExposeHeaders": ["ETag"]

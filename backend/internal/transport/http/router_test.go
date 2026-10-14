@@ -67,7 +67,7 @@ func TestRoutes(t *testing.T) {
 }
 
 func TestApexRedirect(t *testing.T) {
-	for _, base := range []string{"lumio.test", "lumio.nightnoryu.com"} {
+	for _, base := range []string{"lumio.test", "lumio.test.com"} {
 		origin := "https://app." + base
 		handler, err := NewRouter(fstest.MapFS{}, func(context.Context) error { return nil }, log.NoopLogger{}, APIConfig{
 			Origin: origin, BaseDomain: base,
