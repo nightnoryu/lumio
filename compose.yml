@@ -1,6 +1,7 @@
 services:
   lumio-ingress:
     image: traefik:v3.7
+    container_name: traefik
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -23,6 +24,7 @@ services:
 
   lumio:
     build: backend
+    container_name: lumio
     environment: &lumio-environment
       LUMIO_S3_ENDPOINT: http://lumio-storage:3900
       LUMIO_S3_PUBLIC_ENDPOINT: http://localhost:3900
@@ -67,6 +69,7 @@ services:
     build:
       context: backend
       dockerfile: Dockerfile.worker
+    container_name: lumio-worker
     environment: *lumio-environment
     volumes:
       - "./backend/bin/lumio:/app/bin/lumio:ro"
@@ -81,6 +84,7 @@ services:
 
   lumio-storage-init:
     build: backend
+    container_name: lumio-storage-init
     command: ["storage-init"]
     environment: *lumio-environment
     volumes:
@@ -93,6 +97,7 @@ services:
 
   lumio-db:
     image: postgres:16-alpine
+    container_name: lumio-db
     environment:
       POSTGRES_USER: lumio
       POSTGRES_PASSWORD: ${LUMIO_DB_PASSWORD:-lumio-local-only}
@@ -109,6 +114,7 @@ services:
 
   lumio-storage:
     image: dxflrs/garage:v2.4.1
+    container_name: lumio-storage
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
       GARAGE_DEFAULT_ACCESS_KEY: ${LUMIO_S3_ACCESS_KEY:-GK11111111111111111111111111111111}
@@ -127,6 +133,7 @@ services:
 
   lumio-web:
     build: web
+    container_name: lumio-web
     volumes:
       - "./web:/app"
       - "/app/node_modules"
