@@ -30,8 +30,6 @@ spec:
           image: dxflrs/garage:v2.4.1
           args: ["/garage", "server", "--single-node", "--default-bucket"]
           env:
-            - name: GARAGE_LOG_FORMAT
-              value: json
             - name: GARAGE_DEFAULT_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
