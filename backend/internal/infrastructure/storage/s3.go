@@ -111,7 +111,7 @@ func (s *S3) deleteObjects(ctx context.Context, prefix, keep string) error {
 	return nil
 }
 
-// Initialize is an explicit local-development command, never run during server startup.
+// Initialize configures the dedicated bucket when explicitly invoked; server startup only verifies it.
 func (s *S3) Initialize(ctx context.Context, dashboardOrigin string) error {
 	if _, err := s.client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &s.bucket}); err != nil {
 		if _, err = s.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &s.bucket}); err != nil {

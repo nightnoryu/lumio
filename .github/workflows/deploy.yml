@@ -54,6 +54,16 @@ jobs:
             exit 1
           fi
 
+      - name: Initialize S3 storage
+        run: |
+          kubectl delete job/lumio-storage-init -n lumio --ignore-not-found --wait=true
+          kubectl apply -f rendered.yaml -l app.kubernetes.io/component=storage-init
+          if ! kubectl wait --for=condition=complete job/lumio-storage-init -n lumio --timeout=300s; then
+            kubectl describe job/lumio-storage-init -n lumio
+            kubectl logs job/lumio-storage-init -n lumio --all-containers
+            exit 1
+          fi
+
       - name: Apply manifests
         run: kubectl apply -f rendered.yaml
 

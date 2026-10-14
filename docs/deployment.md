@@ -50,8 +50,8 @@ metadata and objects on its own PVC. Its S3 key is scoped to the `lumio` bucket.
 The production overlay currently contains the application's hostnames. Before
 deploying to a different domain, update the host rules and TLS domain
 annotations in `k8s/prod/web-ingress.yaml` and `k8s/prod/s3-ingress.yaml`, plus
-the base domain and public origins in `k8s/prod/configmap.yaml` and
-`k8s/prod/storage-cors.json`. Ensure these names match the DNS and certificate
+the base domain and public origins in `k8s/prod/configmap.yaml`. Ensure these
+names match the DNS and certificate
 coverage already configured on the cluster. Photographer subdomains are routed
 by the wildcard host rule.
 
@@ -70,46 +70,33 @@ Run this sequence only when deployment is authorized:
 2. Render the production overlay. Create its Namespace, generated ConfigMap and
    Secret, PVCs, PostgreSQL/Garage Deployments and Services first.
    Wait for both data services to become ready. Do not start web/worker yet.
-3. Configure the dedicated private bucket below.
-4. Run the `Apply Kubernetes Manifests` workflow or apply the migration Job
-   before the remaining web/worker and Ingress manifests. The Job runs embedded
-   migrations under a PostgreSQL advisory lock; a failed migration stops the
-   rollout. Application startup also applies pending migrations. A missing
-   storage lifecycle rule prevents application startup.
-5. Verify rollout, trusted HTTPS, storage CORS and the full upload/publish path.
+3. Run the `Apply Kubernetes Manifests` workflow or apply the migration Job,
+   then the storage initialization Job, before the remaining web/worker and
+   Ingress manifests. The migration Job runs embedded migrations under a
+   PostgreSQL advisory lock. The storage Job creates the dedicated bucket and
+   configures CORS and lifecycle rules. A failed Job stops the rollout.
+   Application startup also applies pending migrations and requires the storage
+   lifecycle rule.
+4. Verify rollout, trusted HTTPS, storage CORS and the full upload/publish path.
 
 The deploy workflow requires the `prod` environment with `KUBECONFIG` and
 `SOPS_AGE_KEY` secrets. It applies the namespace, config, secret and data
 services first, waits for PostgreSQL and Garage, recreates and waits for the
-migration Job, then applies the remaining resources and waits for web/worker.
-The release workflow calls it after publishing the GitHub Release. Provision
-Garage bucket CORS and lifecycle rules before the first rollout.
+migration Job, then recreates and waits for the storage initialization Job.
+Only then does it apply the remaining resources and wait for web/worker. The
+release workflow calls it after publishing the GitHub Release.
 
 Garage creates the `lumio` bucket and its owner key on first boot using
 `LUMIO_S3_ACCESS_KEY` and `LUMIO_S3_SECRET_KEY` from the Secret. Replace the
 encrypted placeholders with a Garage key ID (`GK` plus 32 hex characters) and
-a 64-character hex secret before deploying.
-Forward Garage's S3 API locally (no admin API is routed) with
-`kubectl -n lumio port-forward service/garage 3900:3900`. In another terminal,
-use the AWS CLI with credentials from your secret store:
-
-```sh
-export AWS_ACCESS_KEY_ID="$LUMIO_S3_ACCESS_KEY"
-export AWS_SECRET_ACCESS_KEY="$LUMIO_S3_SECRET_KEY"
-export AWS_DEFAULT_REGION=garage
-aws --endpoint-url http://127.0.0.1:3900 s3api put-bucket-cors \
-  --bucket lumio --cors-configuration file://k8s/prod/storage-cors.json
-aws --endpoint-url http://127.0.0.1:3900 s3api \
-  put-bucket-lifecycle-configuration --bucket lumio \
-  --lifecycle-configuration file://k8s/prod/storage-lifecycle.json
-```
-
-Use these initialization commands only for the dedicated Lumio bucket; the
-lifecycle command replaces existing rules. Unset the AWS credential variables
-afterward. `storage-init` is development-only and is not used in production.
-Garage's bucket CORS allows exactly the dashboard
-origin. Check a browser preflight for PUT with lowercase `content-type` and
-`if-none-match` request headers, and GET/HEAD with exposed ETag. All objects
+a 64-character hex secret before deploying. The storage Job runs the same
+`storage-init` command used in development. It configures only the bucket named
+by `LUMIO_S3_BUCKET`, using `LUMIO_DASHBOARD_ORIGIN` for CORS. On each deploy,
+it replaces that bucket's CORS and lifecycle rules; keep any other policies in
+the application initializer before deploying. Garage's bucket CORS allows
+exactly the dashboard origin. Check a browser preflight for PUT with lowercase
+`content-type` and `if-none-match` request headers, and GET/HEAD with exposed
+ETag. All objects
 remain private. S3 ingress routes only `/lumio/` without rewriting host, path
 or query; no Garage admin API or root bucket listing is exposed. The `s3` slug
 is reserved.
@@ -163,7 +150,7 @@ aws --endpoint-url http://127.0.0.1:3900 s3 sync \
 Forward PostgreSQL port 5432 separately. `pg_dump` prompts for its password;
 do not place it in shell history. Copy the dump and objects off the cluster,
 encrypt them, retain dated copies, and also preserve configuration, secrets,
-the lifecycle/CORS files and Traefik's private ACME files. A local PVC and
+the storage initialization code and Traefik's private ACME files. A local PVC and
 Garage staging expiry are not backups. Restart web/worker after both copies
 complete. A fresh backup directory avoids retaining deleted objects by mistake.
 

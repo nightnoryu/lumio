@@ -88,13 +88,13 @@ limit and two CPUs. The web process needs no libvips. Keep clocks synchronized
 because job deadlines use PostgreSQL claim timestamps.
 
 For standalone local setup, run `lumio storage-init` once with the same
-settings. This explicit **development-only** command creates the bucket, sets
-dashboard CORS and replaces lifecycle rules with one-day expiry for
-`uploads/`. Never use it against a bucket with other lifecycle policies.
-Production provisioning must configure the private bucket, block anonymous
-access, and add that staging rule itself. API and worker startup verify the
-lifecycle rule exists. Runtime credentials need Garage read/write bucket access;
-initialization also needs owner access. Do not grant browser credentials.
+settings. The production Kubernetes deployment runs it in a Job after
+migrations. It creates the bucket, sets dashboard CORS and replaces lifecycle
+rules with one-day expiry for `uploads/`. Do not use it against a bucket with
+other lifecycle policies unless those policies are added to the initializer.
+API and worker startup verify the lifecycle rule exists. Runtime credentials
+need Garage read/write bucket access; initialization also needs owner access.
+Do not grant browser credentials.
 
 Configure bucket CORS for the exact dashboard origin, methods PUT/GET/HEAD,
 request headers `content-type` and `if-none-match`, and expose `ETag`. Garage

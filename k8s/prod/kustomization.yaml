@@ -6,6 +6,7 @@ namespace: lumio
 resources:
   - ../base
   - configmap.yaml
+  - storage-init-job.yaml
   - middlewares.yaml
   - s3-ingress.yaml
   - web-ingress.yaml
