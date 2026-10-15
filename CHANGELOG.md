@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.3
+
+- keep worker logs in JSON, including AWS SDK messages and shutdown errors
+
 ## v0.1.2
 
 - security fixes
