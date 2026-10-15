@@ -14,7 +14,7 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/nightnoryu/go-kita/jsonlog"
+	"github.com/nightnoryu/go-kita/log"
 	"github.com/nightnoryu/go-kita/postgresql"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 
@@ -73,10 +73,7 @@ func newIdentityFixture(t *testing.T, objects ...app.ObjectStore) *identityFixtu
 			t.Error(closeErr)
 		}
 	})
-	logger, err := jsonlog.NewLogger(&jsonlog.Config{AppName: "test", Level: jsonlog.ErrorLevel})
-	if err != nil {
-		t.Fatal(err)
-	}
+	logger := log.NoopLogger{}
 	migrator, err := db.Migrator(logger, migrations.UpFS)
 	if err != nil {
 		t.Fatal(err)

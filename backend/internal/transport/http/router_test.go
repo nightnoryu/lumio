@@ -9,16 +9,12 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/nightnoryu/go-kita/jsonlog"
 	"github.com/nightnoryu/go-kita/log"
 )
 
 func TestRoutes(t *testing.T) {
 	t.Parallel()
-	logger, err := jsonlog.NewLogger(&jsonlog.Config{AppName: "test", Level: jsonlog.ErrorLevel})
-	if err != nil {
-		t.Fatal(err)
-	}
+	logger := log.NoopLogger{}
 	assets := fstest.MapFS{
 		"index.html":    {Data: []byte("<html>Lumio</html>")},
 		"assets/app.js": {Data: []byte("console.log('lumio')")},
