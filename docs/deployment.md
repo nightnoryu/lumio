@@ -135,39 +135,50 @@ Before inviting users, verify:
 
 ## Manual backup and restore
 
-No automatic backup jobs are installed. Before a release or manual backup,
-stop web and worker and wait for requests/jobs to finish. Keep them stopped
-through the database dump and object copy so both snapshots represent the same
-state. Using local port forwards and credentials from your secret store:
+No automatic backup jobs are installed. From the repository root, with a
+production `kubectl` context and local `kubectl`, AWS CLI, `base64`, and
+`sha256sum` available, run:
 
 ```sh
-pg_dump --host=127.0.0.1 --username=lumio --dbname=lumio \
-  --format=custom --file=lumio.dump
-aws --endpoint-url http://127.0.0.1:3900 s3 sync \
-  s3://lumio /secure-backup/lumio-objects
+./ops/backup.sh --check
+./ops/backup.sh
 ```
 
-Forward PostgreSQL port 5432 separately. `pg_dump` prompts for its password;
-do not place it in shell history. Copy the dump and objects off the cluster,
-encrypt them, retain dated copies, and also preserve configuration, secrets,
-the storage initialization code and Traefik's private ACME files. A local PVC and
-Garage staging expiry are not backups. Restart web/worker after both copies
-complete. A fresh backup directory avoids retaining deleted objects by mistake.
+If `kubectl` is available only on an SSH host, set `KUBE_SSH_HOST` for both
+commands, for example `KUBE_SSH_HOST=projects-prod-k3s ./ops/backup.sh --check`.
+This mode uses a local AWS CLI and an SSH tunnel to Garage. The remote host
+needs `kubectl`; local port 13900 and remote port 23900 must be free. The
+`--check` command reads deployment, pod, service, and Secret metadata and
+checks PostgreSQL tools without stopping the application or copying data.
 
-To restore, keep web/worker stopped and provision empty PostgreSQL 16 and Garage
-volumes in an isolated environment. Create the database/user with the same
-names and re-create the private bucket, CORS, lifecycle and application key.
-Restore with `pg_restore --host=127.0.0.1 --username=lumio --dbname=lumio
---no-owner --exit-on-error lumio.dump`, then restore objects:
+The script expects one web and one worker replica. It scales both to zero,
+waits for their pods to exit, streams a PostgreSQL custom-format dump, and
+copies the private `lumio` bucket through a local Garage port forward. It reads
+the Garage key from `lumio-secrets` without displaying it. The snapshot is
+published as a dated `lumio-YYYYMMDDTHHMMSSZ` directory only after both copies
+finish; the script attempts to restart web and worker even if backup fails. Use
+`KUBE_NAMESPACE` to select another namespace or `LUMIO_BACKUP_S3_PORT` if local
+port 13900 is occupied; `LUMIO_BACKUP_REMOTE_S3_PORT` changes the SSH host's
+port 23900. Keep writes stopped from any other clients during the
+snapshot. Expect a short application outage.
+
+Copy the directory off the cluster, encrypt it, retain dated copies, and also
+preserve configuration, secrets, the storage initialization code, and Traefik's
+private ACME files. A local PVC and Garage staging expiry are not backups.
+
+To restore a complete backup into the matching PostgreSQL 16 and Garage
+installation, use the corresponding application image version and run:
 
 ```sh
-aws --endpoint-url http://127.0.0.1:3900 s3 sync \
-  /secure-backup/lumio-objects s3://lumio
+./ops/restore.sh --yes lumio-YYYYMMDDTHHMMSSZ
 ```
 
-Restore secrets and
-start the image version corresponding to the backup before upgrading. Check
-row counts, login, original object access, public images and a new upload.
+The target must already have the `lumio` database, bucket, secrets and storage
+configuration. The script verifies checksums, stops web and worker, drops and
+recreates the database, then syncs objects with `--delete`. This
+overwrites newer data in both stores. If restore fails, it leaves web and
+worker stopped for inspection. Keep other clients from writing during recovery.
+Check row counts, login, original object access, public images and a new upload.
 Record that recovery test before relying on these backups. For rollback across
 incompatible migrations, restore the matching database/object snapshot; do not
 assume downgrading the image reverses schema changes.
