@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	stdlog "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,8 +14,7 @@ const appID = "lumio"
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		stdlog.Fatal(err)
 	}
 }
 

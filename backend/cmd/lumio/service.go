@@ -53,7 +53,7 @@ func service(ctx context.Context, cfg *config, logger log.Logger) error {
 	if len(os.Args) > 1 && os.Args[1] != "worker" && os.Args[1] != "storage-init" {
 		return operatorCommand(ctx, identity, cfg, os.Args[1:])
 	}
-	objects, err := storage.New(ctx, cfg.S3Endpoint, cfg.S3PublicEndpoint, cfg.S3Region, cfg.S3Bucket, cfg.S3AccessKey, cfg.S3SecretKey)
+	objects, err := storage.New(ctx, cfg.S3Endpoint, cfg.S3PublicEndpoint, cfg.S3Region, cfg.S3Bucket, cfg.S3AccessKey, cfg.S3SecretKey, logger)
 	if err != nil {
 		return err
 	}

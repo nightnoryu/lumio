@@ -27,7 +27,7 @@ func (m *Media) Work(ctx context.Context, processor Processor, report func(error
 		case <-timer.C:
 		}
 	}
-	return ctx.Err()
+	return nil
 }
 func (m *Media) processNext(ctx context.Context, processor Processor) (resultErr error) {
 	p, err := m.Store.ClaimPhoto(ctx)

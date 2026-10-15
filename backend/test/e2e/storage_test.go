@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nightnoryu/go-kita/jsonlog"
+
 	"lumio/api/server/publicapi"
 	"lumio/internal/app"
 	"lumio/internal/infrastructure/storage"
@@ -22,7 +24,11 @@ func TestDirectUploads(t *testing.T) {
 	if os.Getenv("LUMIO_TEST_STORAGE") != "1" {
 		t.Skip("start compose storage-init and set LUMIO_TEST_STORAGE=1")
 	}
-	objects, err := storage.New(t.Context(), "http://localhost:9000", "http://localhost:9000", "us-east-1", "lumio", "lumio-local", "lumio-local-only")
+	logger, err := jsonlog.NewLogger(&jsonlog.Config{AppName: "test", Level: jsonlog.ErrorLevel})
+	if err != nil {
+		t.Fatal(err)
+	}
+	objects, err := storage.New(t.Context(), "http://localhost:9000", "http://localhost:9000", "us-east-1", "lumio", "lumio-local", "lumio-local-only", logger)
 	if err != nil {
 		t.Fatal(err)
 	}

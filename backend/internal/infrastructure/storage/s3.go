@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go/logging"
+	"github.com/nightnoryu/go-kita/log"
 
 	"lumio/internal/domain"
 )
@@ -23,8 +25,20 @@ type S3 struct {
 	bucket string
 }
 
-func New(ctx context.Context, endpoint, publicEndpoint, region, bucket, key, secret string) (*S3, error) {
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region), config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(key, secret, "")))
+func New(ctx context.Context, endpoint, publicEndpoint, region, bucket, key, secret string, logger log.Logger) (*S3, error) {
+	sdkLogger := logger.WithFields(log.Fields{"component": "aws-sdk"})
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(key, secret, "")),
+		config.WithLogger(logging.LoggerFunc(func(classification logging.Classification, format string, args ...interface{}) {
+			message := fmt.Sprintf(format, args...)
+			if classification == logging.Warn {
+				sdkLogger.Warn(message)
+			} else {
+				sdkLogger.Debug(message)
+			}
+		})),
+	)
 	if err != nil {
 		return nil, err
 	}
