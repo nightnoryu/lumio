@@ -38,6 +38,12 @@ Edit the OpenAPI contract and `.templ` sources, then regenerate with `mise run b
 
 Use Go's testing package with `*_test.go`; use Vitest, Testing Library, and jsdom with `*.test.ts`/`*.test.tsx`. Run `mise run test` for unit/frontend tests. E2E tests use the `e2e` build tag and Testcontainers PostgreSQL. Cover changed behavior and failure paths; no numeric coverage threshold is configured.
 
+## Definition of Done
+
+- For code changes, both `mise run` and `mise run backend:test:e2e` must pass.
+- For changes under `k8s/base/`, `mise run k8s:lint` must pass.
+- When both conditions apply, all three commands must pass.
+
 ## Commit & Pull Request Guidelines
 
 History uses short, imperative subjects such as “Make draft buttons panel sticky.” Follow that style. PRs should explain the problem and resulting behavior, link relevant issues, report validation, and include screenshots for UI changes. Note migration or configuration changes explicitly.
