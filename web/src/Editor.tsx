@@ -75,6 +75,13 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
         {error && <p className="error" role="alert">{t(error)}</p>}
         {notice && <p role="status">{t(notice)}</p>}
         <form onSubmit={save}>
+            <div className="editor-actions editor-draft-actions">
+                <button type="submit" disabled={busy}>{busy ? t("Please wait…") : t("Save draft")}</button>
+                <a href={`/preview/${siteId}`} target="_blank" rel="noreferrer">{t("Preview saved portfolio ↗")}</a>
+                <button type="button" className="quiet" disabled={busy} onClick={() => {if (!dirty || window.confirm(t("Discard unsaved changes and reload the saved draft?"))) {setBusy(true); setReload(n => n + 1);}}}>{t("Reload saved draft")}</button>
+                <span role="status">{dirty ? t("Unsaved changes") : t("Saved draft")}</span>
+                {dirty && <p className="hint">{t("Save first to include your latest changes in the preview.")}</p>}
+            </div>
             <fieldset disabled={busy}>
                 <legend>{t("About you")}</legend>
                 <label>{t("Display name")}<input maxLength={120} value={draft.displayName} onChange={e => change({displayName: e.target.value})}/></label>
@@ -132,9 +139,6 @@ export function Editor({siteId, csrf}: {siteId: string; csrf: string}) {
                 <p className="hint">{t("Leave these blank to use your name and biography. Your cover photograph, or first portfolio photograph, appears in link previews.")}</p>
             </fieldset>
             {!!incomplete.length && <aside><p>{t("Before sharing your portfolio:")}</p><ul>{incomplete.map(item => <li key={String(item)}>{item}</li>)}</ul><p>{t("You can save an incomplete draft.")}</p></aside>}
-            <div className="editor-actions"><button disabled={busy}>{busy ? t("Please wait…") : t("Save draft")}</button><span role="status">{dirty ? t("Unsaved changes") : t("Saved draft")}</span></div>
         </form>
-        <div className="editor-actions"><a href={`/preview/${siteId}`} target="_blank" rel="noreferrer">{t("Preview saved portfolio ↗")}</a><button type="button" className="quiet" disabled={busy} onClick={() => {if (!dirty || window.confirm(t("Discard unsaved changes and reload the saved draft?"))) {setBusy(true); setReload(n => n + 1);}}}>{t("Reload saved draft")}</button></div>
-        {dirty && <p className="hint">{t("Save first to include your latest changes in the preview.")}</p>}
     </div>;
 }

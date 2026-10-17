@@ -72,6 +72,9 @@
     .editor-actions > :is(button, a) { @apply w-full sm:w-auto; }
     .editor-actions > a { @apply inline-flex min-h-12 items-center justify-center rounded-xl border border-line bg-white px-4 py-3 text-sm font-semibold no-underline hover:bg-accent/5; }
     .editor-actions > span { @apply text-sm text-muted; }
+    .editor-actions.editor-draft-actions { @apply sticky top-0 z-10 m-0 flex-row flex-wrap items-center gap-2 rounded-xl border border-line bg-paper p-3 shadow-md; }
+    .editor-draft-actions > :is(button, a) { @apply w-auto flex-auto sm:flex-none; }
+    .editor-draft-actions > .hint { @apply m-0 max-w-none basis-full; }
     .editor-row, .selected-photos li { @apply mb-4 min-w-0 border-b border-line pb-5; overflow-wrap: anywhere; }
     .selected-photos { @apply mt-5 list-decimal pl-5; }
     .portfolio-editor aside { @apply rounded-xl border border-amber-200/70 bg-amber-50 p-4 text-sm text-stone-700; }
