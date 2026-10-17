@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.0
+
+- draft buttons are now sticky for more convenient editing
+
 ## v0.1.3
 
 - keep worker logs in JSON, including AWS SDK messages and shutdown errors
