@@ -49,9 +49,12 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
     useEffect(() => {
         if (!target.current) return;
         const uploads = new Map<string, {id: string; url: string}>();
-        const uppy = new Uppy({restrictions: {allowedFileTypes: ["image/jpeg", "image/png", "image/webp"]}, autoProceed: false})
+        const uppy = new Uppy({restrictions: {allowedFileTypes: ["image/jpeg", "image/png", "image/webp"]}, autoProceed: false});
+        uppy
             .use(Dashboard, {target: target.current, inline: true, height: 360, proudlyDisplayPoweredByUppy: false, hideProgressDetails: false})
-            .use(AwsS3, {shouldUseMultipart: false, async getUploadParameters(file) {
+            .use(AwsS3, {shouldUseMultipart: false, generateObjectKey: file => file.id, async signRequest(request) {
+                const file = uppy.getFile(request.key);
+                if (!file) throw new Error("Upload file is no longer available");
                 let upload = uploads.get(file.id);
                 if (!upload) {
                     const result = await api.POST("/api/sites/{id}/photos", {params: {path: {id: siteId}}, headers: {"X-CSRF-Token": csrf}, body: {
@@ -61,7 +64,7 @@ export function Photos({siteId, csrf}: {siteId: string; csrf: string}) {
                     upload = result.data; uploads.set(file.id, upload);
                     setRevision(n => n + 1);
                 }
-                return {method: "PUT", url: upload.url, headers: {"Content-Type": file.type, "If-None-Match": "*"}};
+                return {url: upload.url, headers: {"Content-Type": file.type, "If-None-Match": "*"}};
             }});
         uploader.current = uppy;
         async function complete(fileId: string) {
