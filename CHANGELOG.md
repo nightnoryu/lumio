@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1
+
+- security updates
+
 ## v0.2.0
 
 - draft buttons are now sticky for more convenient editing
