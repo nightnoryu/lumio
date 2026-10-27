@@ -4,7 +4,10 @@ golangci-lint = "2.12.2"
 "go:github.com/ogen-go/ogen/cmd/ogen" = "1.24.0"
 node = "26.8.1"
 pnpm = "12.3.1"
-
+sops = "3.13.3"
+age = "1.3.2"
+ksops = "4.5.1"
+kustomize = "5.8.3"
 kubectl = "1.37.0"
 kubeconform = "0.8.0"
 
@@ -128,6 +131,54 @@ sources = [
     "../mise.toml",
 ]
 outputs = [ "../backend/internal/webui/dist/index.html", "../backend/internal/webui/dist/**/*" ]
+
+# Deployment
+
+[tasks.secrets]
+run = "sops k8s/prod/secret.enc.yaml"
+
+[tasks.prerequisites]
+confirm = { message = "Apply prerequisites?", yes = "Apply", no = "Cancel", default = "no" }
+run = """
+kustomize build --enable-alpha-plugins --enable-exec k8s/prod |\
+  kubectl apply -f - -l app.kubernetes.io/component=prerequisite
+kubectl rollout status deployment/postgres -n lumio --timeout=300s
+kubectl rollout status deployment/garage -n lumio --timeout=300s
+"""
+
+[tasks.migrate]
+confirm = { message = "Run migrations?", yes = "Migrate", no = "Cancel", default = "no" }
+run = """
+kubectl delete job/lumio-migrate -n lumio --ignore-not-found --wait=true
+kustomize build --enable-alpha-plugins --enable-exec k8s/prod |\
+  kubectl apply -f - -l app.kubernetes.io/component=migration
+if ! kubectl wait --for=condition=complete job/lumio-migrate -n lumio --timeout=300s; then
+  kubectl describe job/lumio-migrate -n lumio
+  kubectl logs job/lumio-migrate -n lumio --all-containers
+exit 1
+fi
+"""
+
+[tasks."initialize-s3"]
+confirm = { message = "Initialize S3 storage?", yes = "Init", no = "Cancel", default = "no" }
+run = """
+kubectl delete job/lumio-storage-init -n lumio --ignore-not-found --wait=true
+kustomize build --enable-alpha-plugins --enable-exec k8s/prod |\
+  kubectl apply -f - -l app.kubernetes.io/component=storage-init
+if ! kubectl wait --for=condition=complete job/lumio-storage-init -n lumio --timeout=300s; then
+  kubectl describe job/lumio-storage-init -n lumio
+  kubectl logs job/lumio-storage-init -n lumio --all-containers
+exit 1
+fi
+"""
+
+[tasks.deploy]
+confirm = { message = "Deploy to production?", yes = "Deploy", no = "Cancel", default = "no" }
+run = """
+kustomize build --enable-alpha-plugins --enable-exec k8s/prod | kubectl apply -f -
+kubectl rollout status deployment/lumio-web -n lumio --timeout=300s
+kubectl rollout status deployment/lumio-worker -n lumio --timeout=300s
+"""
 
 # Checks
 

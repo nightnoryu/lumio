@@ -19,55 +19,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Set up kustomize
-        uses: imranismail/setup-kustomize@v3
+      - name: Setup mise
+        uses: jdx/mise-action@v4
+        with:
+          install: true
+          cache: true
 
-      - name: Set up ksops
-        run: |
-          curl -s https://raw.githubusercontent.com/viaduct-ai/kustomize-sops/master/scripts/install-ksops-archive.sh | bash
-
-      - name: Set up Kubernetes context
+      - name: Set Kubernetes context
         uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
 
-      - name: Render manifests and apply prerequisites
+      - name: Apply prerequisites
         env:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
-        run: |
-          kustomize build --enable-alpha-plugins --enable-exec k8s/prod > rendered.yaml
-          kubectl apply -f rendered.yaml -l app.kubernetes.io/component=prerequisite
-
-      - name: Wait for prerequisites
-        run: |
-          kubectl rollout status deployment/postgres -n lumio --timeout=300s
-          kubectl rollout status deployment/garage -n lumio --timeout=300s
+        run: mise run --yes prerequisites
 
       - name: Run migrations
-        run: |
-          kubectl delete job/lumio-migrate -n lumio --ignore-not-found --wait=true
-          kubectl apply -f rendered.yaml -l app.kubernetes.io/component=migration
-          if ! kubectl wait --for=condition=complete job/lumio-migrate -n lumio --timeout=300s; then
-            kubectl describe job/lumio-migrate -n lumio
-            kubectl logs job/lumio-migrate -n lumio --all-containers
-            exit 1
-          fi
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: mise run --yes migrate
 
       - name: Initialize S3 storage
-        run: |
-          kubectl delete job/lumio-storage-init -n lumio --ignore-not-found --wait=true
-          kubectl apply -f rendered.yaml -l app.kubernetes.io/component=storage-init
-          if ! kubectl wait --for=condition=complete job/lumio-storage-init -n lumio --timeout=300s; then
-            kubectl describe job/lumio-storage-init -n lumio
-            kubectl logs job/lumio-storage-init -n lumio --all-containers
-            exit 1
-          fi
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: mise run --yes initialize-s3
 
-      - name: Apply manifests
-        run: kubectl apply -f rendered.yaml
-
-      - name: Wait for rollout
-        run: |
-          kubectl rollout status deployment/lumio-web -n lumio --timeout=300s
-          kubectl rollout status deployment/lumio-worker -n lumio --timeout=300s
+      - name: Deploy
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: mise run --yes deploy
