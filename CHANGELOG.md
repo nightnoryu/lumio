@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.2
+
+- security fixes
+
 ## v0.2.1
 
 - security updates
