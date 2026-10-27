@@ -1,6 +1,6 @@
 module lumio
 
-go 1.26.0
+go 1.26.10
 
 require (
 	github.com/a-h/templ v0.3.1070
@@ -8,11 +8,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.33.9
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.3
+	github.com/aws/smithy-go v1.28.5
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/go-faster/errors v0.8.0
 	github.com/go-faster/jx v1.2.0
 	github.com/gorilla/mux v1.8.1
-	github.com/nightnoryu/go-kita v1.9.0
+	github.com/nightnoryu/go-kita v1.9.1
 	github.com/ogen-go/ogen v1.24.0
 	github.com/prometheus/client_golang v1.25.0
 	golang.org/x/image v0.47.0
@@ -35,7 +36,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.38.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.43.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.51.4 // indirect
-	github.com/aws/smithy-go v1.28.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

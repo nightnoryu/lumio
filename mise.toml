@@ -1,5 +1,5 @@
 [tools]
-go = "1.26.8"
+go = "1.26.10"
 golangci-lint = "2.12.2"
 "go:github.com/ogen-go/ogen/cmd/ogen" = "1.24.0"
 node = "26.8.1"
