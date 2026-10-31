@@ -1,6 +1,6 @@
 [tools]
-go = "1.26.10"
-golangci-lint = "2.12.2"
+go = "1.27.3"
+golangci-lint = "2.15.0"
 "go:github.com/ogen-go/ogen/cmd/ogen" = "1.24.0"
 node = "26.8.1"
 pnpm = "12.3.1"
@@ -59,7 +59,7 @@ run = "go mod tidy"
 [tasks."backend:modules"]
 dir = "backend"
 run = "go mod download"
-sources = [ "go.mod", "go.sum", "../mise.toml" ]
+sources = [ "go.*" ]
 outputs = { auto = true }
 
 [tasks."backend:generate"]
@@ -69,7 +69,6 @@ run = """ogen --clean \
 --config ./backend/api/server/publicapi/.ogen.yml \
 ./api/publicapi.yml"""
 sources = [
-    "mise.toml",
     "api/publicapi.yml",
     "backend/api/server/publicapi/.ogen.yml",
 ]
@@ -79,7 +78,7 @@ outputs = [ "backend/api/server/publicapi/*_gen.go" ]
 dir = "backend"
 depends = [ "backend:modules" ]
 run = "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate"
-sources = [ "**/*.templ", "go.mod", "go.sum", "../mise.toml" ]
+sources = [ "**/*.templ", "go.*" ]
 outputs = [ "**/*_templ.go" ]
 
 # All Go consumers must wait until generators and embedded assets are ready.
@@ -91,11 +90,9 @@ dir = "backend"
 depends = [ "backend:prepare" ]
 run = "go build -trimpath -v -o ./bin/lumio ./cmd/lumio"
 sources = [
-    "../mise.toml",
-    "go.mod",
-    "go.sum",
     "**/*.go",
     "**/*.templ",
+    "go.*",
     "data/migrations/*.up.sql",
     "internal/webui/dist/**/*",
     "internal/portfolio/viewer.js",
@@ -106,14 +103,14 @@ outputs = [ "bin/lumio" ]
 [tasks."web:modules"]
 dir = "web"
 run = "pnpm install --frozen-lockfile"
-sources = [ "package.json", "pnpm-lock.yaml", ".npmrc", "pnpm-workspace.yaml", "../mise.toml" ]
+sources = [ "package.json", "pnpm-lock.yaml", ".npmrc", "pnpm-workspace.yaml" ]
 outputs = [ "node_modules/.modules.yaml", "node_modules/.pnpm/lock.yaml" ]
 
 [tasks."web:generate"]
 dir = "web"
 depends = [ "web:modules" ]
 run = "pnpm run generate"
-sources = [ "../api/publicapi.yml", "package.json", "pnpm-lock.yaml", "../mise.toml" ]
+sources = [ "../api/publicapi.yml", "package.json", "pnpm-lock.yaml" ]
 outputs = [ "src/api/schema.d.ts" ]
 
 [tasks."web:build"]
@@ -128,7 +125,6 @@ sources = [
     "vite.config.*",
     "package.json",
     "pnpm-lock.yaml",
-    "../mise.toml",
 ]
 outputs = [ "../backend/internal/webui/dist/index.html", "../backend/internal/webui/dist/**/*" ]
 

@@ -137,14 +137,16 @@ func (h *apiHandler) NewError(_ context.Context, err error) *publicapi.ErrorStat
 	}
 	return &publicapi.ErrorStatusCode{StatusCode: status, Response: publicapi.Error{Message: message}}
 }
+
 func writeError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(publicapi.Error{Message: message})
 }
+
+// nolint:gocognit
 func (h *apiHandler) middleware(next *publicapi.Server) http.Handler {
 	origin, _ := url.Parse(h.config.Origin)
-	// Bound expensive Argon2 work and request bodies before API decoding.
 	hashing := make(chan struct{}, 2)
 	limits := &rateLimits{entries: make(map[string]rateEntry)}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
